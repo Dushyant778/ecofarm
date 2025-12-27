@@ -102,7 +102,7 @@ export default function Home() {
         { text: "Access 500+ government schemes", icon: Award },
         { text: "24/7 AI farming assistant", icon: MessageCircle },
         { text: "Real-time market price updates", icon: BarChart2 },
-        { text: "Community of 50K+ farmers", icon: Users }
+        { text: "Community of 5+ farmers", icon: Users }
     ];
 
     const testimonials = [
