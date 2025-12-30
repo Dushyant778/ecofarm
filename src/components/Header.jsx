@@ -29,7 +29,7 @@ export default function Header() {
     const menuItems = [
         { id: "dashboard", label: "Dashboard", icon: Store },
         { id: "crops", label: "Crops", icon: Sun },
-        { id: "News", label: "News", icon: Bell },
+        { id: "Q&A", label: "Q&A", icon: Bell },
         { id: "About", label: "About", icon: User }
     ];
 
