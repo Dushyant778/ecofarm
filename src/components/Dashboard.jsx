@@ -99,7 +99,7 @@ export default function Dashboard() {
             try {
                 const key = API_KEY || "9cd57cdbc5bc4dcb8f625834252810";
                 const response = await fetch(
-                    `http://api.weatherapi.com/v1/current.json?key=${key}&q=${city}&aqi=yes`
+                    `https://api.weatherapi.com/v1/current.json?key=${key}&q=${city}&aqi=yes`
                 );
                 const data = await response.json();
 

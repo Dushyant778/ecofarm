@@ -104,7 +104,7 @@ export default function IrrigationPlanner() {
     async function fetchWeather() {
       try {
         const response = await fetch(
-          `http://api.weatherapi.com/v1/current.json?key=${API_KEY}&q=${city}&aqi=yes`
+          `https://api.weatherapi.com/v1/current.json?key=${API_KEY}&q=${city}&aqi=yes`
         );
         const data = await response.json();
 
@@ -170,7 +170,7 @@ export default function IrrigationPlanner() {
   return (
     <div style={{ fontFamily: "Inter, sans-serif", background: "#f4f6f8", minHeight: "100vh", padding: "20px" }}>
       <div style={{ maxWidth: "750px", margin: "auto", background: "#fff", borderRadius: "12px", padding: "25px", boxShadow: "0 4px 20px rgba(0,0,0,0.1)" }}>
-        
+
         {/* Language */}
         <div style={{ textAlign: "right", marginBottom: "10px" }}>
           <select value={lang} onChange={(e) => setLang(e.target.value)} style={{ padding: "6px 10px", borderRadius: "6px" }}>
