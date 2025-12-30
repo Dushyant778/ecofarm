@@ -133,7 +133,7 @@ export default function About() {
 
     // Statistics
     const statistics = [
-        { value: "50K+", label: "Active Farmers", icon: Users },
+        { value: "5+", label: "Active Farmers", icon: Users },
         { value: "23%", label: "Avg Yield Increase", icon: TrendingUp },
         { value: "500+", label: "Govt Schemes", icon: Award },
         { value: "98%", label: "AI Accuracy", icon: Brain }

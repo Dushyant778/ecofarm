@@ -102,7 +102,7 @@ export default function Home() {
         { text: "Access 500+ government schemes", icon: Award },
         { text: "24/7 AI farming assistant", icon: MessageCircle },
         { text: "Real-time market price updates", icon: BarChart2 },
-        { text: "Community of 50K+ farmers", icon: Users }
+        { text: "Community of 5+ farmers", icon: Users }
     ];
 
     const testimonials = [
@@ -130,7 +130,7 @@ export default function Home() {
     ];
 
     const stats = [
-        { value: "50K+", label: "Active Farmers", icon: Users },
+        { value: "5+", label: "Active Farmers", icon: Users },
         { value: "23%", label: "Avg Yield Increase", icon: TrendingUp },
         { value: "500+", label: "Govt Schemes", icon: Award },
         { value: "98%", label: "AI Accuracy", icon: Brain }
@@ -197,7 +197,7 @@ export default function Home() {
 
                             <p className="text-xl md:text-2xl text-gray-600 mb-8 leading-relaxed">
                                 Harness the power of AI to maximize yields, optimize resources,
-                                and increase profits. Join 50,000+ farmers transforming agriculture.
+                                and increase profits. Join 5+ farmers transforming agriculture.
                             </p>
 
                             <div className="flex flex-wrap gap-4 justify-center lg:justify-start mb-8">
