@@ -2,6 +2,25 @@
 
 This comprehensive documentation details every file, component, and utility function within the EcoFarm application. The application is a React-based platform designed to assist farmers with AI-driven insights, crop management, and financial planning.
 
+## 🚀 Quick Deploy to Production
+
+**Ready to deploy?** See **[DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md)** for full instructions.
+
+**Quick start:**
+```bash
+npm install -g vercel
+vercel login
+vercel
+vercel env add GEMINI_API_KEY
+vercel --prod
+```
+
+**✅ Production-Ready Features:**
+- Serverless backend for secure Gemini API key management
+- CORS-enabled API proxy
+- One-click Vercel deployment
+- Environment variable configuration
+
 ---
 
 ## 1. **src/components/About.jsx**

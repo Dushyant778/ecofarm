@@ -10,10 +10,10 @@ import Crops from "./components/Crops";
 import NewsSection from "./components/Market";
 import About from "./components/About";
 
-import ChatAssistant from "./components/ChatAssistant";
-
 export default function App() {
     return (
+        
+
         <BrowserRouter>
             <Header />      {/* Buttons will be inside this */}
             <Routes>
@@ -24,7 +24,6 @@ export default function App() {
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/crops" element={<Crops />} />
                 <Route path="/News" element={<NewsSection />} />
-                <Route path="/Q&A" element={<ChatAssistant />} />
                 <Route path="/About" element={<About />} />
                 {/* 404 Page */}
                 <Route

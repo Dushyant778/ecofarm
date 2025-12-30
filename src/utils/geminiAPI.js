@@ -3,7 +3,9 @@
  * Handles all AI-powered responses for agricultural questions
  */
 
-const API_KEY = "AIzaSyDWbDrYwAbAaA57bwnNprRnQ00xmZTdIxM";
+// Use environment variable for API key (set in .env file)
+// For production, use a backend proxy to keep the key secure
+const API_KEY = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY || "AIzaSyDWbDrYwAbAaA57bwnNprRnQ00xmZTdIxM";
 const API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent";
 
 /**
@@ -36,34 +38,29 @@ async function retryWithBackoff(fn, retries = 3, delay = 1000) {
  */
 export async function getAIResponse(question) {
     try {
+        // Use serverless function endpoint
+        // In development: calls local API (if available)
+        // In production: calls Vercel serverless function
+        const API_ENDPOINT = process.env.API_ENDPOINT || process.env.VITE_API_ENDPOINT || '/api/gemini';
+
         const fetchResponse = async () => {
-            const response = await fetch(`${API_URL}?key=${API_KEY}`, {
+            const response = await fetch(API_ENDPOINT, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    contents: [{
-                        parts: [{
-                            text: `You are an expert agricultural advisor helping farmers. Answer the following question concisely and practically. Focus on actionable advice suitable for farmers. Question: ${question}`
-                        }]
-                    }],
-                    generationConfig: {
-                        temperature: 0.7,
-                        topK: 40,
-                        topP: 0.95,
-                        maxOutputTokens: 1024,
-                    }
+                    question: question.trim()
                 })
             });
 
             if (!response.ok) {
-                const errorData = await response.json();
-                // 503 is Service Unavailable (overloaded), 429 is Too Many Requests
+                const errorData = await response.json().catch(() => ({}));
+                // Retry on transient errors
                 if (response.status === 503 || response.status === 429) {
                     throw new Error(`Transient Error: ${response.status}`);
                 }
-                throw new Error(`API Error: ${errorData.error?.message || response.statusText}`);
+                throw new Error(errorData.error || `API Error: ${response.statusText}`);
             }
 
             return await response.json();
@@ -71,21 +68,19 @@ export async function getAIResponse(question) {
 
         const data = await retryWithBackoff(fetchResponse);
 
-        // Extract the text from Gemini's response structure
-        const aiResponse = data.candidates?.[0]?.content?.parts?.[0]?.text;
-
-        if (!aiResponse) {
-            throw new Error('No response generated from AI');
+        // Extract the answer from the serverless function response
+        if (data.success && data.answer) {
+            return data.answer;
         }
 
-        return aiResponse.trim();
+        throw new Error('No response generated from AI');
 
     } catch (error) {
         console.error('Gemini API Error:', error);
 
         // Return a fallback response with error context
-        if (error.message.includes('API_KEY')) {
-            return 'Error: Invalid API key. Please check your configuration.';
+        if (error.message.includes('API_KEY') || error.message.includes('API key')) {
+            return 'Error: API key not configured. Please contact administrator.';
         } else if (error.message.includes('quota')) {
             return 'The AI service has reached its quota. Please try again later.';
         } else if (error.message.includes('network') || error.message.includes('fetch')) {
@@ -104,54 +99,38 @@ export async function getAIResponse(question) {
  */
 export async function getAIResponseWithImage(question, imageBase64) {
     try {
+        const API_ENDPOINT = process.env.API_ENDPOINT || process.env.VITE_API_ENDPOINT || '/api/gemini';
+
         const fetchResponse = async () => {
-            const response = await fetch(`${API_URL}?key=${API_KEY}`, {
+            const response = await fetch(API_ENDPOINT, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    contents: [{
-                        parts: [
-                            {
-                                text: `You are an expert agricultural advisor. Analyze this crop/farm image and answer: ${question}`
-                            },
-                            {
-                                inline_data: {
-                                    mime_type: "image/jpeg",
-                                    data: imageBase64
-                                }
-                            }
-                        ]
-                    }],
-                    generationConfig: {
-                        temperature: 0.7,
-                        topK: 40,
-                        topP: 0.95,
-                        maxOutputTokens: 1024,
-                    }
+                    question: question.trim(),
+                    imageBase64: imageBase64
                 })
             });
 
             if (!response.ok) {
-                const errorData = await response.json();
+                const errorData = await response.json().catch(() => ({}));
                 if (response.status === 503 || response.status === 429) {
                     throw new Error(`Transient Error: ${response.status}`);
                 }
-                throw new Error(`API Error: ${errorData.error?.message || response.statusText}`);
+                throw new Error(errorData.error || `API Error: ${response.statusText}`);
             }
 
             return await response.json();
         };
 
         const data = await retryWithBackoff(fetchResponse);
-        const aiResponse = data.candidates?.[0]?.content?.parts?.[0]?.text;
 
-        if (!aiResponse) {
-            throw new Error('No response generated from AI');
+        if (data.success && data.answer) {
+            return data.answer;
         }
 
-        return aiResponse.trim();
+        throw new Error('No response generated from AI');
 
     } catch (error) {
         console.error('Gemini API Error (with image):', error);
