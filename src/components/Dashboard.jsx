@@ -15,7 +15,9 @@ import {
     Sun,
     Award,
     Search,
-    Sparkles
+    Sparkles,
+    Rocket,
+    X
 } from "lucide-react";
 import CropRecommendation from "./CropRecommendation";
 import DiseaseDetection from "./DiseaseDetection";
@@ -91,6 +93,7 @@ export default function Dashboard() {
     const [error, setError] = useState("");
     const [inputCity, setInputCity] = useState("");
     const [city, setCity] = useState("Meerut");
+    const [showRoadmap, setShowRoadmap] = useState(false);
 
     const API_KEY = process.env.REACT_APP_WEATHER_API_KEY;
 
@@ -171,6 +174,31 @@ export default function Dashboard() {
                     className="absolute bottom-20 left-20 w-[500px] h-[500px] bg-blue-400/15 rounded-full blur-3xl"
                 />
             </div>
+
+            {/* Top Right Roadmap Button */}
+            <motion.button
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.5 }}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setShowRoadmap(true)}
+                className="absolute top-6 right-6 z-50 flex items-center gap-2 px-4 py-2 bg-white/90 backdrop-blur-md rounded-full shadow-lg border border-green-200 text-green-700 font-bold hover:bg-green-50 transition-all duration-300 hidden md:flex"
+            >
+                <Rocket className="w-5 h-5 text-green-600" />
+                <span>Future Roadmap</span>
+            </motion.button>
+            <motion.button
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.5 }}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setShowRoadmap(true)}
+                className="absolute top-6 right-6 z-50 p-3 bg-white/90 backdrop-blur-md rounded-full shadow-lg border border-green-200 text-green-700 font-bold hover:bg-green-50 transition-all duration-300 md:hidden flex"
+            >
+                <Rocket className="w-5 h-5 text-green-600" />
+            </motion.button>
 
             {/* Header */}
             <motion.div
@@ -310,10 +338,10 @@ export default function Dashboard() {
                 {/* Live Stats Row */}
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
                     {[
-                        { icon: Sprout, label: "Active Farms", value: "12,847", gradient: "from-green-400 to-emerald-600" },
+                        { icon: Sprout, label: "Active Farms", value: "5+", gradient: "from-green-400 to-emerald-600" },
                         { icon: Award, label: "Avg Yield +", value: "23%", gradient: "from-emerald-400 to-teal-600" },
                         { icon: BarChart2, label: "Profit Margin", value: "₹45,200", gradient: "from-blue-400 to-cyan-600" },
-                        { icon: MessageCircle, label: "Queries Answered", value: "89K", gradient: "from-purple-400 to-indigo-600" },
+                        { icon: MessageCircle, label: "Queries Answered", value: "8+", gradient: "from-purple-400 to-indigo-600" },
                     ].map((stat, idx) => (
                         <motion.div
                             key={idx}
@@ -456,6 +484,153 @@ export default function Dashboard() {
                             {openModule === "mandi" && <MandiPrice />}
                             {openModule === "irrigation" && <IrrigationPlanner />}
                             {openModule === "cost" && <CostCalculator />}
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Roadmap Modal */}
+            <AnimatePresence>
+                {showRoadmap && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+                        onClick={() => setShowRoadmap(false)}
+                    >
+                        <motion.div
+                            initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                            animate={{ scale: 1, opacity: 1, y: 0 }}
+                            exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                            onClick={(e) => e.stopPropagation()}
+                            className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl max-h-[85vh] overflow-hidden flex flex-col relative"
+                        >
+                            {/* Header */}
+                            <div className="bg-gradient-to-r from-green-600 to-emerald-700 p-6 text-white flex justify-between items-center shrink-0">
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
+                                        <Rocket className="w-6 h-6 text-yellow-300" />
+                                    </div>
+                                    <div>
+                                        <h2 className="text-2xl font-bold">Future Development Phases</h2>
+                                        <p className="text-green-100 text-sm">Strategic Vision for EcoFarm</p>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={() => setShowRoadmap(false)}
+                                    className="p-2 hover:bg-white/20 rounded-full transition-colors"
+                                >
+                                    <X className="w-6 h-6" />
+                                </button>
+                            </div>
+
+                            {/* Content */}
+                            <div className="overflow-y-auto p-6 md:p-8 space-y-6">
+                                <p className="text-gray-600 text-lg leading-relaxed border-l-4 border-green-500 pl-4 bg-green-50 py-3 pr-4 rounded-r-lg">
+                                    The future development of EcoFarm is planned in three well-defined phases, focusing on system maturity, intelligence, and real-world deployment.
+                                </p>
+
+                                <div className="grid gap-8">
+                                    {/* Phase 1 */}
+                                    <div className="relative pl-8 border-l-2 border-emerald-200">
+                                        <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-emerald-500 ring-4 ring-white shadow-md" />
+                                        <h3 className="text-xl font-bold text-gray-800 mb-3 flex items-center gap-2">
+                                            <span className="bg-emerald-100 text-emerald-800 text-xs px-2 py-1 rounded-full uppercase tracking-wider">Phase 1</span>
+                                            Backend & Database
+                                        </h3>
+                                        <div className="bg-gray-50 rounded-xl p-5 border border-gray-100">
+                                            <p className="text-gray-600 mb-4 leading-relaxed">
+                                                Strengthening the system foundation by introducing a backend architecture and centralized database.
+                                            </p>
+                                            <ul className="space-y-3 text-gray-600">
+                                                <li className="flex gap-3">
+                                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-2.5 shrink-0" />
+                                                    <span><strong>Node.js & Express.js</strong> backend for managing user data, requests, and security.</span>
+                                                </li>
+                                                <li className="flex gap-3">
+                                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-2.5 shrink-0" />
+                                                    <span><strong>Structured Crop Schema</strong> based on agricultural research (soil type, pH, temp, etc.).</span>
+                                                </li>
+                                                <li className="flex gap-3">
+                                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-2.5 shrink-0" />
+                                                    <span><strong>Persistent Storage</strong> for crop schemas, user inputs, and historical farming data.</span>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+
+                                    {/* Phase 2 */}
+                                    <div className="relative pl-8 border-l-2 border-blue-200">
+                                        <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-blue-500 ring-4 ring-white shadow-md" />
+                                        <h3 className="text-xl font-bold text-gray-800 mb-3 flex items-center gap-2">
+                                            <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full uppercase tracking-wider">Phase 2</span>
+                                            AI & Machine Learning
+                                        </h3>
+                                        <div className="bg-gray-50 rounded-xl p-5 border border-gray-100">
+                                            <p className="text-gray-600 mb-4 leading-relaxed">
+                                                Integrating Machine Learning models (Decision Trees, Random Forests) to enhance decision-making accuracy.
+                                            </p>
+                                            <div className="grid sm:grid-cols-2 gap-4">
+                                                <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                                                    <span className="font-semibold text-blue-700 block mb-1">Crop Recommendation</span>
+                                                    <span className="text-sm text-gray-500">Based on soil, climate & past yield patterns.</span>
+                                                </div>
+                                                <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                                                    <span className="font-semibold text-blue-700 block mb-1">Cost & Yield Prediction</span>
+                                                    <span className="text-sm text-gray-500">Forecasting for better financial planning.</span>
+                                                </div>
+                                                <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                                                    <span className="font-semibold text-blue-700 block mb-1">Disease Risk ID</span>
+                                                    <span className="text-sm text-gray-500">Using structured data analysis.</span>
+                                                </div>
+                                                <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                                                    <span className="font-semibold text-blue-700 block mb-1">Market Trend Analysis</span>
+                                                    <span className="text-sm text-gray-500">Based on historical price data.</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Phase 3 */}
+                                    <div className="relative pl-8 border-l-2 border-purple-200">
+                                        <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-purple-500 ring-4 ring-white shadow-md" />
+                                        <h3 className="text-xl font-bold text-gray-800 mb-3 flex items-center gap-2">
+                                            <span className="bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded-full uppercase tracking-wider">Phase 3</span>
+                                            Real-Time & Advanced Features
+                                        </h3>
+                                        <div className="bg-gray-50 rounded-xl p-5 border border-gray-100">
+                                            <p className="text-gray-600 mb-4 leading-relaxed">
+                                                Focusing on real-world usability, scalability, and advanced interactions for widespread adoption.
+                                            </p>
+                                            <ul className="space-y-3 text-gray-600">
+                                                <li className="flex gap-3">
+                                                    <span className="w-1.5 h-1.5 rounded-full bg-purple-500 mt-2.5 shrink-0" />
+                                                    <span><strong>Real-Time APIs</strong> for weather forecasting, mandi prices, and soil data.</span>
+                                                </li>
+                                                <li className="flex gap-3">
+                                                    <span className="w-1.5 h-1.5 rounded-full bg-purple-500 mt-2.5 shrink-0" />
+                                                    <span><strong>Advanced Features:</strong> Image-based crop disease detection & Voice-based interaction in regional languages.</span>
+                                                </li>
+                                                <li className="flex gap-3">
+                                                    <span className="w-1.5 h-1.5 rounded-full bg-purple-500 mt-2.5 shrink-0" />
+                                                    <span><strong>Mobile App</strong> with offline support and low-bandwidth optimization for rural accessibility.</span>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Footer */}
+                            <div className="p-6 border-t border-gray-100 bg-gray-50 text-right shrink-0">
+                                <button
+                                    onClick={() => setShowRoadmap(false)}
+                                    className="px-8 py-2.5 bg-gray-800 hover:bg-gray-900 text-white font-semibold rounded-xl transition-all shadow-lg hover:shadow-xl transform active:scale-95"
+                                >
+                                    Close Roadmap
+                                </button>
+                            </div>
                         </motion.div>
                     </motion.div>
                 )}
