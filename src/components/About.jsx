@@ -105,15 +105,7 @@ export default function About() {
     // Team members
     const teamMembers = [
         {
-            name: "Dr. Ritu Sharma",
-            role: "Project Guide",
-            image: "👨‍🔬",
-            bio: "PhD in Computer Science",
-            linkedin: "#",
-            twitter: "#"
-        },
-        {
-            name:"Aaditya Gaur",
+            name:"Dushyant",
             role: "Developer",
             image: "👨‍💼",
             bio: "",
@@ -121,8 +113,8 @@ export default function About() {
             twitter: "#"
         },
         {
-            name: "Dushyant",
-            role: "Developer",
+            name: "Aaditya Gaur",
+            role: "Database",
             image: "👨‍💼",
             bio: "",
             linkedin: "#",
