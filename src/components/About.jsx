@@ -104,6 +104,14 @@ export default function About() {
 
     // Team members
     const teamMembers = [
+         {
+            name:"Rohit negi ",
+            role: "Instructor",
+            image: "👨‍💼",
+            bio: "",
+            linkedin: "#",
+            twitter: "#"
+        },
         {
             name:"Dushyant",
             role: "Developer",
@@ -113,7 +121,7 @@ export default function About() {
             twitter: "#"
         },
         {
-            name: "Aaditya Gaur",
+            name: "Aaditya Tandon",
             role: "Database",
             image: "👨‍💼",
             bio: "",
