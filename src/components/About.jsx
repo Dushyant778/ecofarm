@@ -122,7 +122,7 @@ export default function About() {
         },
         {
             name: "Aaditya Tandon",
-            role: "Database",
+            role: "Database Instructor",
             image: "👨‍💼",
             bio: "",
             linkedin: "#",
