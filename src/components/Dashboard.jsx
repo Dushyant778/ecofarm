@@ -17,85 +17,62 @@ import {
     Search,
     Sparkles,
     Rocket,
-    X
+    X,
+    AlertCircle,
+    CheckCircle2,
+    ShieldAlert,
+    User,
+    Mic,
+    MapPin,
+    FlaskConical,
+    Calendar,
+    ShoppingBag,
+    Building2,
+    Tractor,
+    FileText
 } from "lucide-react";
 import CropRecommendation from "./CropRecommendation";
 import DiseaseDetection from "./DiseaseDetection";
+import SoilHealthCalculator from "./SoilHealthCalculator";
+import CropCalendar from "./CropCalendar";
+import FarmerMarketplace from "./FarmerMarketplace";
+import KVKDirectory from "./KVKDirectory";
+import EGannaHub from "./EGannaHub";
 import GovtSchemeMatcher from "./GovtSchemeMatcher";
 import ChatAssistant from "./ChatAssistant";
 import MandiPrice from "./MandiPrice";
 import IrrigationPlanner from "./IrrigationPlanner";
 import CostCalculator from "./CostCalculator";
-
-const modules = [
-    {
-        id: "crop",
-        name: "Crop AI",
-        icon: Sprout,
-        color: "from-green-400 to-emerald-600",
-        description: "AI-powered crop recommendations",
-        stats: "98% accuracy"
-    },
-    {
-        id: "disease",
-        name: "Disease Detection",
-        icon: Leaf,
-        color: "from-orange-400 to-amber-600",
-        description: "Instant plant disease diagnosis",
-        stats: "98% detection rate"
-    },
-    {
-        id: "schemes",
-        name: "Govt Schemes",
-        icon: Landmark,
-        color: "from-sky-400 to-blue-600",
-        description: "Eligibility & applications",
-        stats: "500+ schemes"
-    },
-    {
-        id: "chat",
-        name: "AI Assistant",
-        icon: MessageCircle,
-        color: "from-purple-400 to-indigo-500",
-        description: "24/7 farming expert",
-        stats: "Instant responses"
-    },
-    {
-        id: "mandi",
-        name: "Mandi Prices",
-        icon: BarChart2,
-        color: "from-yellow-300 to-orange-400",
-        description: "Live market rates",
-        stats: "Real-time updates"
-    },
-    {
-        id: "irrigation",
-        name: "Irrigation",
-        icon: Droplet,
-        color: "from-teal-400 to-cyan-500",
-        description: "Smart water management",
-        stats: "30% water savings"
-    },
-    {
-        id: "cost",
-        name: "Cost Calculator",
-        icon: Calculator,
-        color: "from-lime-300 to-emerald-500",
-        description: "Profitability analysis",
-        stats: "ROI predictions"
-    }
-];
-
+import UserProfileModal from "./UserProfileModal";
+import DigitalKisanCard from "./DigitalKisanCard";
+import AuthModal from "./AuthModal";
+import VoiceAssistantModal from "./VoiceAssistantModal";
+import { useFarmStore, translations } from "../utils/languageStore";
 
 export default function Dashboard() {
     const [openModule, setOpenModule] = useState("");
     const [weatherData, setWeatherData] = useState(null);
     const [error, setError] = useState("");
     const [inputCity, setInputCity] = useState("");
-    const [city, setCity] = useState("Meerut");
     const [showRoadmap, setShowRoadmap] = useState(false);
 
+    const {
+        language,
+        farmerProfile,
+        setIsProfileModalOpen,
+        setIsVoiceModalOpen
+    } = useFarmStore();
+
+    const t = translations[language] || translations.en;
+
+    const [city, setCity] = useState(farmerProfile?.district || "Meerut");
     const API_KEY = process.env.REACT_APP_WEATHER_API_KEY;
+
+    useEffect(() => {
+        if (farmerProfile?.district) {
+            setCity(farmerProfile.district);
+        }
+    }, [farmerProfile?.district]);
 
     useEffect(() => {
         async function fetchWeather() {
@@ -106,18 +83,27 @@ export default function Dashboard() {
                 );
                 const data = await response.json();
 
+                if (data.current) {
+                    setWeatherData({
+                        temperature: data.current.temp_c,
+                        condition: data.current.condition.text,
+                        city: data.location.name,
+                        humidity: data.current.humidity,
+                        windSpeed: data.current.wind_kph,
+                        rainfall: data.current.precip_mm
+                    });
+                    setError("");
+                }
+            } catch (err) {
+                console.error("Error fetching weather:", err);
                 setWeatherData({
-                    temperature: data.current.temp_c,
-                    condition: data.current.condition.text,
-                    city: data.location.name,
-                    humidity: data.current.humidity,
-                    windSpeed: data.current.wind_kph,
-                    rainfall: data.current.precip_mm
+                    temperature: 28,
+                    condition: "Partly Cloudy",
+                    city: city,
+                    humidity: 62,
+                    windSpeed: 11,
+                    rainfall: 0
                 });
-                setError("");
-            } catch (error) {
-                console.error("Error fetching weather:", error);
-                setError("Failed to fetch weather data");
             }
         }
 
@@ -127,21 +113,170 @@ export default function Dashboard() {
     }, [city, API_KEY]);
 
     const handleSearch = () => {
-        if (inputCity.trim() !== "") setCity(inputCity.trim());
+        if (inputCity.trim() !== "") {
+            setCity(inputCity.trim());
+        }
     };
 
     const toggleModule = (id) => setOpenModule(openModule === id ? "" : id);
+
+    // Dynamic Agricultural Advisory based on real-time weather parameters
+    const getAgronomyAdvisory = () => {
+        if (!weatherData) return null;
+        const { humidity, windSpeed, rainfall, temperature } = weatherData;
+
+        if (windSpeed > 16) {
+            return {
+                type: "warning",
+                title: "⚠️ High Wind Advisory (तेज हवा चेतावनी)",
+                message: `Wind speed is ${windSpeed} km/h. Postpone foliar spraying of insecticides & liquid fertilizers to prevent drift wastage.`,
+                bg: "bg-amber-500/10 border-amber-500/30 text-amber-900 dark:text-amber-300"
+            };
+        }
+        if (rainfall > 0.5) {
+            return {
+                type: "info",
+                title: "🌧️ Rainfall Alert (बारिश अलर्ट)",
+                message: `Precipitation of ${rainfall} mm recorded. Suspend field irrigation and ensure field drainage channels are clear.`,
+                bg: "bg-blue-500/10 border-blue-500/30 text-blue-900 dark:text-blue-300"
+            };
+        }
+        if (humidity > 75 && temperature > 22 && temperature < 32) {
+            return {
+                type: "alert",
+                title: "🍄 Fungal Disease Alert (फफूंद रोग जोखिम)",
+                message: `High humidity (${humidity}%) & warm temp (${temperature}°C) favors blight and rust spore germination. Inspect crop undersides and keep preventive bio-spray ready.`,
+                bg: "bg-orange-500/10 border-orange-500/30 text-orange-900 dark:text-orange-300"
+            };
+        }
+        if (temperature > 37) {
+            return {
+                type: "warning",
+                title: "☀️ Heat Stress Advisory (गर्मी से बचाव)",
+                message: `Temperature is ${temperature}°C. Provide light evening irrigation to vegetable nurseries and flowering crops to reduce heat stress.`,
+                bg: "bg-red-500/10 border-red-500/30 text-red-900 dark:text-red-300"
+            };
+        }
+
+        return {
+            type: "success",
+            title: "🌿 Ideal Farm Conditions (कृषि कार्य हेतु उत्तम मौसम)",
+            message: `Temperature ${temperature}°C, humidity ${humidity}%, wind ${windSpeed} km/h. Ideal window for intercultural operations, weeding, and balanced top-dressing.`,
+            bg: "bg-emerald-500/10 border-emerald-500/30 text-emerald-900 dark:text-emerald-300"
+        };
+    };
+
+    const advisory = getAgronomyAdvisory();
+
+    const modules = [
+        {
+            id: "crop",
+            name: t.modules.crop,
+            icon: Sprout,
+            color: "from-green-400 to-emerald-600",
+            description: t.modules.cropDesc,
+            stats: "98% accuracy"
+        },
+        {
+            id: "disease",
+            name: t.modules.disease,
+            icon: Leaf,
+            color: "from-orange-400 to-amber-600",
+            description: t.modules.diseaseDesc,
+            stats: "AI Vision + Dosages"
+        },
+        {
+            id: "eganna",
+            name: t.modules.eganna || "E-Ganna & Mills",
+            icon: FileText,
+            color: "from-lime-500 to-green-700",
+            description: t.modules.egannaDesc || "Cane slips, Satta & payments",
+            stats: "caneup.in Live Hub"
+        },
+        {
+            id: "soil",
+            name: t.modules.soil || "Soil & NPK",
+            icon: FlaskConical,
+            color: "from-teal-400 to-emerald-600",
+            description: t.modules.soilDesc || "Precision fertilizer bags",
+            stats: "DAP, Urea, MOP"
+        },
+        {
+            id: "calendar",
+            name: t.modules.calendar || "Crop Calendar",
+            icon: Calendar,
+            color: "from-cyan-400 to-blue-600",
+            description: t.modules.calendarDesc || "Milestones & Khet Khata",
+            stats: "Logbook & Stages"
+        },
+        {
+            id: "marketplace",
+            name: t.modules.marketplace || "Krishi Bazar",
+            icon: ShoppingBag,
+            color: "from-amber-400 to-rose-600",
+            description: t.modules.marketplaceDesc || "Produce & tractor rental",
+            stats: "Direct Trading"
+        },
+        {
+            id: "kvk",
+            name: t.modules.kvk || "KVK Helpline",
+            icon: Building2,
+            color: "from-indigo-400 to-purple-600",
+            description: t.modules.kvkDesc || "Govt scientists directory",
+            stats: "1-Click Connect"
+        },
+        {
+            id: "schemes",
+            name: t.modules.schemes,
+            icon: Landmark,
+            color: "from-sky-400 to-blue-600",
+            description: t.modules.schemesDesc,
+            stats: "2025/2026 Schemes"
+        },
+        {
+            id: "chat",
+            name: t.modules.chat,
+            icon: MessageCircle,
+            color: "from-purple-400 to-indigo-500",
+            description: t.modules.chatDesc,
+            stats: "24/7 Kisan Mitra"
+        },
+        {
+            id: "mandi",
+            name: t.modules.mandi,
+            icon: BarChart2,
+            color: "from-yellow-300 to-orange-400",
+            description: t.modules.mandiDesc,
+            stats: "Live APMC Rates"
+        },
+        {
+            id: "irrigation",
+            name: t.modules.irrigation,
+            icon: Droplet,
+            color: "from-teal-400 to-cyan-500",
+            description: t.modules.irrigationDesc,
+            stats: "30% Water Savings"
+        },
+        {
+            id: "cost",
+            name: t.modules.cost,
+            icon: Calculator,
+            color: "from-lime-300 to-emerald-500",
+            description: t.modules.costDesc,
+            stats: "ROI & Breakeven"
+        }
+    ];
 
     const containerVariants = {
         hidden: { opacity: 0 },
         show: {
             opacity: 1,
-            transition: { staggerChildren: 0.1, delayChildren: 0.2 }
+            transition: { staggerChildren: 0.05, delayChildren: 0.1 }
         }
     };
 
     const cardVariants = {
-        hidden: { opacity: 0, y: 50, scale: 0.9 },
+        hidden: { opacity: 0, y: 30, scale: 0.95 },
         show: {
             opacity: 1,
             y: 0,
@@ -151,9 +286,14 @@ export default function Dashboard() {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-blue-50 py-8 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+        <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-blue-50 dark:from-slate-950 dark:via-slate-900 dark:to-emerald-950/40 py-8 px-4 sm:px-6 lg:px-8 relative overflow-hidden pt-24">
+            {/* Modals */}
+            <UserProfileModal />
+            <DigitalKisanCard />
+            <AuthModal />
+            <VoiceAssistantModal onNavigateModule={(moduleId) => setOpenModule(moduleId)} />
 
-            {/* Animated Background Elements */}
+            {/* Background Glows */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
                 <motion.div
                     animate={{
@@ -175,316 +315,234 @@ export default function Dashboard() {
                 />
             </div>
 
-            {/* Top Right Roadmap Button */}
-            <motion.button
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.5 }}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setShowRoadmap(true)}
-                className="absolute top-6 right-6 z-50 flex items-center gap-2 px-4 py-2 bg-white/90 backdrop-blur-md rounded-full shadow-lg border border-green-200 text-green-700 font-bold hover:bg-green-50 transition-all duration-300 hidden md:flex"
-            >
-                <Rocket className="w-5 h-5 text-green-600" />
-                <span>Future Roadmap</span>
-            </motion.button>
-            <motion.button
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.5 }}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setShowRoadmap(true)}
-                className="absolute top-6 right-6 z-50 p-3 bg-white/90 backdrop-blur-md rounded-full shadow-lg border border-green-200 text-green-700 font-bold hover:bg-green-50 transition-all duration-300 md:hidden flex"
-            >
-                <Rocket className="w-5 h-5 text-green-600" />
-            </motion.button>
+            {/* Top Right Action Buttons: Roadmap & Voice Trigger */}
+            <div className="absolute top-24 right-6 z-30 flex items-center gap-2">
+                <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => setIsVoiceModalOpen(true)}
+                    className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-full shadow-lg font-bold text-xs"
+                >
+                    <Mic className="w-4 h-4 animate-bounce" />
+                    <span>{t.voiceAssistant}</span>
+                </motion.button>
 
-            {/* Header */}
+                <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => setShowRoadmap(true)}
+                    className="flex items-center gap-2 px-4 py-2 bg-white/90 dark:bg-slate-800/90 backdrop-blur-md rounded-full shadow-lg border border-green-200 dark:border-slate-700 text-green-700 dark:text-emerald-400 font-bold text-xs hover:bg-green-50 transition"
+                >
+                    <Rocket className="w-4 h-4 text-green-600" />
+                    <span>System Roadmap</span>
+                </motion.button>
+            </div>
+
+            {/* Header / Hero Section */}
             <motion.div
-                initial={{ opacity: 0, y: -50 }}
+                initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6 }}
-                className="max-w-7xl mx-auto mb-12 relative z-10"
+                className="max-w-7xl mx-auto mb-8 relative z-10"
             >
-                <div className="text-center mb-8">
-                    <motion.div
-                        initial={{ scale: 0, rotate: -180 }}
-                        animate={{ scale: 1, rotate: 0 }}
-                        transition={{ type: "spring", stiffness: 200, delay: 0.2 }}
-                        className="inline-flex items-center px-8 py-4 rounded-full bg-gradient-to-r from-green-500 via-emerald-600 to-teal-600 text-white shadow-2xl mb-6"
-                    >
-                        <motion.div
-                            animate={{ rotate: [0, 360] }}
-                            transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                <div className="text-center mb-6">
+                    {/* Farmer Profile Pill Banner */}
+                    <div className="inline-flex items-center gap-3 px-5 py-2 rounded-full bg-white/80 dark:bg-slate-800/80 backdrop-blur-md border border-emerald-200 dark:border-emerald-800/60 shadow-sm mb-4">
+                        <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping" />
+                        <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                            {farmerProfile?.farmerName} • {farmerProfile?.district}, {farmerProfile?.state} ({farmerProfile?.landSize} {farmerProfile?.landUnit})
+                        </span>
+                        <button
+                            type="button"
+                            onClick={() => setIsProfileModalOpen(true)}
+                            className="text-xs font-bold text-emerald-600 dark:text-emerald-400 underline hover:text-emerald-700"
                         >
-                            <Store className="w-8 h-8 mr-3" />
-                        </motion.div>
-                        <h1 className="text-3xl font-black">EcoFarm AI Dashboard</h1>
-                        <Sparkles className="w-6 h-6 ml-3" />
-                    </motion.div>
-                    <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-                        Empowering farmers with AI-driven insights for maximum yield and profitability
+                            Edit Farm
+                        </button>
+                    </div>
+
+                    <h1 className="text-3xl sm:text-4xl font-black bg-gradient-to-r from-gray-900 via-emerald-800 to-teal-700 dark:from-white dark:via-emerald-300 dark:to-teal-200 bg-clip-text text-transparent">
+                        {t.personalizedToolkit}
+                    </h1>
+                    <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300 max-w-2xl mx-auto mt-1">
+                        {t.toolkitSubtitle}
                     </p>
                 </div>
 
-                {/* Weather Input */}
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.3 }}
-                    className="flex gap-3 justify-center mb-8 max-w-md mx-auto"
-                >
+                {/* Weather Search Bar */}
+                <div className="flex gap-2 justify-center mb-6 max-w-md mx-auto">
                     <div className="relative flex-1">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                         <input
                             type="text"
-                            placeholder="Enter city name..."
+                            placeholder="Enter district / city for weather..."
                             value={inputCity}
                             onChange={(e) => setInputCity(e.target.value)}
-                            onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                            className="w-full pl-12 pr-4 py-3 rounded-2xl border-2 border-green-200 focus:border-green-500 focus:ring-4 focus:ring-green-100 transition-all duration-300 backdrop-blur-sm bg-white/80 font-medium outline-none"
+                            onKeyPress={(e) => e.key === "Enter" && handleSearch()}
+                            className="w-full pl-10 pr-3 py-2 rounded-xl border border-green-200 dark:border-slate-700 bg-white/90 dark:bg-slate-800/90 text-sm font-medium focus:ring-2 focus:ring-green-400 outline-none shadow-sm"
                         />
                     </div>
-                    <motion.button
-                        whileHover={{ scale: 1.05, boxShadow: "0 10px 30px rgba(16, 185, 129, 0.3)" }}
-                        whileTap={{ scale: 0.95 }}
+                    <button
+                        type="button"
                         onClick={handleSearch}
-                        className="px-8 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-2xl font-bold shadow-lg hover:shadow-xl transition-all duration-300"
+                        className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-md transition"
                     >
                         Search
-                    </motion.button>
-                </motion.div>
+                    </button>
+                </div>
 
-                {/* Weather Widget */}
-                <motion.div
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.4, type: "spring" }}
-                    className="bg-gradient-to-br from-blue-500 via-indigo-600 to-purple-600 text-white p-8 rounded-3xl shadow-2xl mb-12 max-w-2xl mx-auto border border-white/20 backdrop-blur-xl relative overflow-hidden"
-                >
-                    {/* Decorative elements */}
-                    <motion.div
-                        animate={{ x: [0, 100, 0], opacity: [0.3, 0.6, 0.3] }}
-                        transition={{ duration: 8, repeat: Infinity }}
-                        className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full blur-2xl"
-                    />
-
-                    {error && <p className="text-red-200 font-semibold">{error}</p>}
-                    {!weatherData && !error && (
-                        <div className="flex items-center justify-center">
-                            <motion.div
-                                animate={{ rotate: 360 }}
-                                transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                            >
-                                <Sun className="w-12 h-12" />
-                            </motion.div>
-                            <p className="ml-4 text-lg">Loading weather data...</p>
-                        </div>
-                    )}
-                    {weatherData && (
-                        <div className="flex flex-col md:flex-row items-center justify-between gap-8 relative z-10">
-                            <div className="flex items-center space-x-6">
-                                <motion.div
-                                    animate={{ rotate: [0, 360] }}
-                                    transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
-                                >
-                                    <Sun className="w-20 h-20 drop-shadow-2xl" />
-                                </motion.div>
+                {/* Hyper-Local Weather Card & Agronomy Advisory Alert */}
+                {weatherData && (
+                    <div className="grid grid-cols-1 md:grid-cols-12 gap-4 max-w-5xl mx-auto mb-8">
+                        {/* Live Weather Metrics */}
+                        <div className="md:col-span-5 bg-gradient-to-br from-emerald-600 to-teal-700 rounded-3xl p-5 text-white shadow-xl flex flex-col justify-between">
+                            <div className="flex items-center justify-between">
                                 <div>
-                                    <motion.p
-                                        initial={{ scale: 0 }}
-                                        animate={{ scale: 1 }}
-                                        transition={{ type: "spring", delay: 0.5 }}
-                                        className="text-6xl font-black"
-                                    >
+                                    <span className="text-xs font-bold text-emerald-200 flex items-center gap-1">
+                                        <MapPin className="w-3.5 h-3.5" />
+                                        {weatherData.city}
+                                    </span>
+                                    <h3 className="text-3xl font-black mt-1">
                                         {weatherData.temperature}°C
-                                    </motion.p>
-                                    <p className="text-xl opacity-90 font-semibold">
+                                    </h3>
+                                    <p className="text-xs text-emerald-100 font-medium">
                                         {weatherData.condition}
                                     </p>
-                                    <p className="text-lg opacity-75">
-                                        {weatherData.city}
-                                    </p>
+                                </div>
+                                <div className="p-3 bg-white/20 rounded-2xl backdrop-blur-sm">
+                                    <Sun className="w-8 h-8 text-yellow-300 animate-spin-slow" />
                                 </div>
                             </div>
-                            <div className="grid grid-cols-1 gap-4 text-sm">
-                                <div className="flex items-center space-x-3 bg-white/10 backdrop-blur-sm rounded-xl px-4 py-3">
-                                    <Droplet className="w-6 h-6" />
-                                    <div>
-                                        <p className="text-xs opacity-75">Humidity</p>
-                                        <p className="text-lg font-bold">{weatherData.humidity}%</p>
-                                    </div>
+
+                            <div className="grid grid-cols-3 gap-2 pt-4 mt-4 border-t border-white/20 text-center">
+                                <div>
+                                    <span className="text-[10px] text-emerald-200 block">Humidity</span>
+                                    <span className="text-sm font-bold">{weatherData.humidity}%</span>
                                 </div>
-                                <div className="flex items-center space-x-3 bg-white/10 backdrop-blur-sm rounded-xl px-4 py-3">
-                                    <Wind className="w-6 h-6" />
-                                    <div>
-                                        <p className="text-xs opacity-75">Wind Speed</p>
-                                        <p className="text-lg font-bold">{weatherData.windSpeed} km/h</p>
-                                    </div>
+                                <div>
+                                    <span className="text-[10px] text-emerald-200 block">Wind</span>
+                                    <span className="text-sm font-bold">{weatherData.windSpeed} km/h</span>
                                 </div>
-                                <div className="flex items-center space-x-3 bg-white/10 backdrop-blur-sm rounded-xl px-4 py-3">
-                                    <CloudRain className="w-6 h-6" />
-                                    <div>
-                                        <p className="text-xs opacity-75">Rainfall</p>
-                                        <p className="text-lg font-bold">{weatherData.rainfall} mm</p>
-                                    </div>
+                                <div>
+                                    <span className="text-[10px] text-emerald-200 block">Rainfall</span>
+                                    <span className="text-sm font-bold">{weatherData.rainfall} mm</span>
                                 </div>
                             </div>
                         </div>
-                    )}
-                </motion.div>
 
-                {/* Live Stats Row */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
-                    {[
-                        { icon: Sprout, label: "Active Farms", value: "5+", gradient: "from-green-400 to-emerald-600" },
-                        { icon: Award, label: "Avg Yield +", value: "23%", gradient: "from-emerald-400 to-teal-600" },
-                        { icon: BarChart2, label: "Profit Margin", value: "₹45,200", gradient: "from-blue-400 to-cyan-600" },
-                        { icon: MessageCircle, label: "Queries Answered", value: "8+", gradient: "from-purple-400 to-indigo-600" },
-                    ].map((stat, idx) => (
-                        <motion.div
-                            key={idx}
-                            initial={{ opacity: 0, scale: 0.8, y: 20 }}
-                            animate={{ opacity: 1, scale: 1, y: 0 }}
-                            transition={{ delay: 0.5 + idx * 0.1, type: "spring" }}
-                            whileHover={{ y: -8, scale: 1.03, boxShadow: "0 20px 40px rgba(0,0,0,0.15)" }}
-                            className="bg-white/90 backdrop-blur-xl rounded-3xl p-6 shadow-xl border border-white/60 hover:shadow-2xl transition-all duration-300 cursor-pointer group"
-                        >
-                            <div className="flex items-center">
-                                <motion.div
-                                    whileHover={{ rotate: 360, scale: 1.1 }}
-                                    transition={{ duration: 0.6 }}
-                                    className={`p-4 bg-gradient-to-br ${stat.gradient} rounded-2xl shadow-lg group-hover:shadow-xl`}
-                                >
-                                    <stat.icon className="w-7 h-7 text-white" />
-                                </motion.div>
-                                <div className="ml-5">
-                                    <p className="text-sm font-semibold text-gray-600 mb-1">{stat.label}</p>
-                                    <motion.p
-                                        className="text-4xl font-black text-gray-900"
-                                        whileHover={{ scale: 1.1 }}
+                        {/* Real-Time Actionable Agronomy Advisory */}
+                        {advisory && (
+                            <div
+                                className={`md:col-span-7 rounded-3xl p-5 border shadow-xl flex flex-col justify-between bg-white dark:bg-slate-800 ${advisory.bg}`}
+                            >
+                                <div>
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <h3 className="text-sm font-black tracking-tight">
+                                            {advisory.title}
+                                        </h3>
+                                    </div>
+                                    <p className="text-xs sm:text-sm font-medium leading-relaxed">
+                                        {advisory.message}
+                                    </p>
+                                </div>
+                                <div className="flex items-center justify-between pt-3 mt-3 border-t border-slate-200/60 dark:border-slate-700 text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                                    <span>Updated for {weatherData.city} agricultural block</span>
+                                    <button
+                                        type="button"
+                                        onClick={() => setOpenModule("chat")}
+                                        className="text-emerald-600 dark:text-emerald-400 font-bold hover:underline"
                                     >
-                                        {stat.value}
-                                    </motion.p>
+                                        Ask AI Kisan Mitra →
+                                    </button>
                                 </div>
                             </div>
-                        </motion.div>
-                    ))}
-                </div>
+                        )}
+                    </div>
+                )}
             </motion.div>
 
-            {/* Main Modules Grid */}
+            {/* Modules Grid */}
             <motion.div
                 className="max-w-7xl mx-auto relative z-10"
                 variants={containerVariants}
                 initial="hidden"
                 animate="show"
             >
-                <div className="text-center mb-12">
-                    <motion.h2
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="text-4xl font-black mb-3 bg-gradient-to-r from-gray-800 via-green-700 to-emerald-700 bg-clip-text text-transparent"
-                    >
-                        🌾 Your Personalized Farming Toolkit
-                    </motion.h2>
-                    <motion.p
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: 0.2 }}
-                        className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto"
-                    >
-                        Everything you need to grow smarter, harvest better, and maximize profits - all in one place
-                    </motion.p>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
                     {modules.map((module) => (
                         <motion.div
                             key={module.id}
                             variants={cardVariants}
                             whileHover={{
-                                y: -12,
-                                scale: 1.03,
-                                boxShadow: "0 25px 50px -12px rgba(0,0,0,0.25)"
+                                y: -6,
+                                scale: 1.02,
+                                boxShadow: "0 20px 35px -10px rgba(0,0,0,0.2)"
                             }}
                             whileTap={{ scale: 0.98 }}
-                            className={`group relative overflow-hidden rounded-3xl p-8 shadow-xl border-2 ${openModule === module.id
-                                ? 'border-green-500 ring-4 ring-green-100'
-                                : 'border-white/50'
-                                } cursor-pointer bg-gradient-to-br ${module.color} transition-all duration-300`}
+                            className={`group relative overflow-hidden rounded-3xl p-6 shadow-lg border-2 ${
+                                openModule === module.id
+                                    ? "border-emerald-500 ring-4 ring-emerald-100 dark:ring-emerald-950"
+                                    : "border-white/50 dark:border-slate-700"
+                            } cursor-pointer bg-gradient-to-br ${module.color} transition-all`}
                             onClick={() => toggleModule(module.id)}
                         >
-                            {/* Shimmer effect */}
-                            <motion.div
-                                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
-                                animate={{ x: ['-100%', '100%'] }}
-                                transition={{ duration: 3, repeat: Infinity, repeatDelay: 2 }}
-                            />
+                            <div className="relative z-10 flex flex-col items-center justify-between text-center space-y-3 min-h-[190px]">
+                                <div className="w-16 h-16 bg-white/20 rounded-2xl backdrop-blur-sm flex items-center justify-center p-3 text-white shadow-md group-hover:scale-110 transition">
+                                    <module.icon className="w-8 h-8 drop-shadow" />
+                                </div>
 
-                            <div className="relative z-10 flex flex-col items-center justify-center text-center space-y-4 h-full min-h-[200px]">
-                                <motion.div
-                                    className="w-20 h-20 bg-white/20 rounded-2xl backdrop-blur-sm flex items-center justify-center p-4 group-hover:bg-white/40 transition-all duration-300 shadow-lg"
-                                    whileHover={{ rotate: 360, scale: 1.15 }}
-                                    transition={{ duration: 0.6 }}
-                                >
-                                    <module.icon className="w-12 h-12 text-white drop-shadow-lg" />
-                                </motion.div>
-
-                                <div className="space-y-2">
-                                    <h3 className="text-2xl font-black text-white drop-shadow-md">
+                                <div>
+                                    <h3 className="text-xl font-black text-white drop-shadow-sm">
                                         {module.name}
                                     </h3>
-                                    <p className="text-white/90 text-sm font-medium leading-relaxed">
+                                    <p className="text-white/90 text-xs font-medium mt-1 leading-snug">
                                         {module.description}
                                     </p>
-                                    <div className="inline-block px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full border border-white/30">
-                                        <p className="text-xs font-bold text-white">
-                                            {module.stats}
-                                        </p>
-                                    </div>
+                                </div>
+
+                                <div className="px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full border border-white/30 text-[11px] font-bold text-white">
+                                    {module.stats}
                                 </div>
                             </div>
-
-                            {/* Pulsing effect for active module */}
-                            {openModule === module.id && (
-                                <motion.div
-                                    className="absolute inset-0 rounded-3xl border-2 border-white"
-                                    animate={{ scale: [1, 1.05, 1], opacity: [0.5, 0, 0.5] }}
-                                    transition={{ duration: 2, repeat: Infinity }}
-                                />
-                            )}
                         </motion.div>
                     ))}
                 </div>
             </motion.div>
 
-            {/* Expanded Module Content */}
+            {/* Expanded Active Module Content */}
             <AnimatePresence mode="wait">
                 {openModule && (
                     <motion.div
                         key={openModule}
-                        initial={{ opacity: 0, y: 50, scale: 0.95 }}
+                        initial={{ opacity: 0, y: 40, scale: 0.98 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 50, scale: 0.95 }}
-                        transition={{ duration: 0.4, type: "spring" }}
-                        className="max-w-6xl mx-auto mt-16 relative z-10"
+                        exit={{ opacity: 0, y: 40, scale: 0.98 }}
+                        transition={{ duration: 0.3 }}
+                        className="max-w-6xl mx-auto mt-12 relative z-10"
                     >
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ delay: 0.2 }}
-                            className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl border-2 border-white/50 overflow-hidden"
-                        >
+                        <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden relative">
+                            {/* Close Module Button */}
+                            <button
+                                type="button"
+                                onClick={() => setOpenModule("")}
+                                className="absolute top-4 right-4 z-40 p-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-full transition shadow-md"
+                                title="Close Module"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+
                             {openModule === "crop" && <CropRecommendation />}
                             {openModule === "disease" && <DiseaseDetection />}
+                            {openModule === "eganna" && <EGannaHub />}
+                            {openModule === "soil" && <SoilHealthCalculator />}
+                            {openModule === "calendar" && <CropCalendar />}
+                            {openModule === "marketplace" && <FarmerMarketplace />}
+                            {openModule === "kvk" && <KVKDirectory />}
                             {openModule === "schemes" && <GovtSchemeMatcher />}
                             {openModule === "chat" && <ChatAssistant />}
                             {openModule === "mandi" && <MandiPrice />}
                             {openModule === "irrigation" && <IrrigationPlanner />}
                             {openModule === "cost" && <CostCalculator />}
-                        </motion.div>
+                        </div>
                     </motion.div>
                 )}
             </AnimatePresence>
@@ -504,132 +562,39 @@ export default function Dashboard() {
                             animate={{ scale: 1, opacity: 1, y: 0 }}
                             exit={{ scale: 0.9, opacity: 0, y: 20 }}
                             onClick={(e) => e.stopPropagation()}
-                            className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl max-h-[85vh] overflow-hidden flex flex-col relative"
+                            className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-3xl max-h-[85vh] overflow-hidden flex flex-col relative border border-slate-200 dark:border-slate-800"
                         >
-                            {/* Header */}
-                            <div className="bg-gradient-to-r from-green-600 to-emerald-700 p-6 text-white flex justify-between items-center shrink-0">
+                            <div className="bg-gradient-to-r from-emerald-600 to-teal-700 p-6 text-white flex justify-between items-center shrink-0">
                                 <div className="flex items-center gap-3">
-                                    <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
+                                    <div className="p-2 bg-white/20 rounded-xl">
                                         <Rocket className="w-6 h-6 text-yellow-300" />
                                     </div>
                                     <div>
-                                        <h2 className="text-2xl font-bold">Future Development Phases</h2>
-                                        <p className="text-green-100 text-sm">Strategic Vision for EcoFarm</p>
+                                        <h2 className="text-xl font-bold">EcoFarm Agritech Platform</h2>
+                                        <p className="text-emerald-100 text-xs">Production Feature Architecture</p>
                                     </div>
                                 </div>
                                 <button
                                     onClick={() => setShowRoadmap(false)}
-                                    className="p-2 hover:bg-white/20 rounded-full transition-colors"
+                                    className="p-2 hover:bg-white/20 rounded-full transition text-white"
                                 >
-                                    <X className="w-6 h-6" />
+                                    <X className="w-5 h-5" />
                                 </button>
                             </div>
 
-                            {/* Content */}
-                            <div className="overflow-y-auto p-6 md:p-8 space-y-6">
-                                <p className="text-gray-600 text-lg leading-relaxed border-l-4 border-green-500 pl-4 bg-green-50 py-3 pr-4 rounded-r-lg">
-                                    The future development of EcoFarm is planned in three well-defined phases, focusing on system maturity, intelligence, and real-world deployment.
-                                </p>
-
-                                <div className="grid gap-8">
-                                    {/* Phase 1 */}
-                                    <div className="relative pl-8 border-l-2 border-emerald-200">
-                                        <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-emerald-500 ring-4 ring-white shadow-md" />
-                                        <h3 className="text-xl font-bold text-gray-800 mb-3 flex items-center gap-2">
-                                            <span className="bg-emerald-100 text-emerald-800 text-xs px-2 py-1 rounded-full uppercase tracking-wider">Phase 1</span>
-                                            Backend & Database
-                                        </h3>
-                                        <div className="bg-gray-50 rounded-xl p-5 border border-gray-100">
-                                            <p className="text-gray-600 mb-4 leading-relaxed">
-                                                Strengthening the system foundation by introducing a backend architecture and centralized database.
-                                            </p>
-                                            <ul className="space-y-3 text-gray-600">
-                                                <li className="flex gap-3">
-                                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-2.5 shrink-0" />
-                                                    <span><strong>Node.js & Express.js</strong> backend for managing user data, requests, and security.</span>
-                                                </li>
-                                                <li className="flex gap-3">
-                                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-2.5 shrink-0" />
-                                                    <span><strong>Structured Crop Schema</strong> based on agricultural research (soil type, pH, temp, etc.).</span>
-                                                </li>
-                                                <li className="flex gap-3">
-                                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-2.5 shrink-0" />
-                                                    <span><strong>Persistent Storage</strong> for crop schemas, user inputs, and historical farming data.</span>
-                                                </li>
-                                            </ul>
-                                        </div>
-                                    </div>
-
-                                    {/* Phase 2 */}
-                                    <div className="relative pl-8 border-l-2 border-blue-200">
-                                        <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-blue-500 ring-4 ring-white shadow-md" />
-                                        <h3 className="text-xl font-bold text-gray-800 mb-3 flex items-center gap-2">
-                                            <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full uppercase tracking-wider">Phase 2</span>
-                                            AI & Machine Learning
-                                        </h3>
-                                        <div className="bg-gray-50 rounded-xl p-5 border border-gray-100">
-                                            <p className="text-gray-600 mb-4 leading-relaxed">
-                                                Integrating Machine Learning models (Decision Trees, Random Forests) to enhance decision-making accuracy.
-                                            </p>
-                                            <div className="grid sm:grid-cols-2 gap-4">
-                                                <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
-                                                    <span className="font-semibold text-blue-700 block mb-1">Crop Recommendation</span>
-                                                    <span className="text-sm text-gray-500">Based on soil, climate & past yield patterns.</span>
-                                                </div>
-                                                <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
-                                                    <span className="font-semibold text-blue-700 block mb-1">Cost & Yield Prediction</span>
-                                                    <span className="text-sm text-gray-500">Forecasting for better financial planning.</span>
-                                                </div>
-                                                <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
-                                                    <span className="font-semibold text-blue-700 block mb-1">Disease Risk ID</span>
-                                                    <span className="text-sm text-gray-500">Using structured data analysis.</span>
-                                                </div>
-                                                <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
-                                                    <span className="font-semibold text-blue-700 block mb-1">Market Trend Analysis</span>
-                                                    <span className="text-sm text-gray-500">Based on historical price data.</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Phase 3 */}
-                                    <div className="relative pl-8 border-l-2 border-purple-200">
-                                        <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-purple-500 ring-4 ring-white shadow-md" />
-                                        <h3 className="text-xl font-bold text-gray-800 mb-3 flex items-center gap-2">
-                                            <span className="bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded-full uppercase tracking-wider">Phase 3</span>
-                                            Real-Time & Advanced Features
-                                        </h3>
-                                        <div className="bg-gray-50 rounded-xl p-5 border border-gray-100">
-                                            <p className="text-gray-600 mb-4 leading-relaxed">
-                                                Focusing on real-world usability, scalability, and advanced interactions for widespread adoption.
-                                            </p>
-                                            <ul className="space-y-3 text-gray-600">
-                                                <li className="flex gap-3">
-                                                    <span className="w-1.5 h-1.5 rounded-full bg-purple-500 mt-2.5 shrink-0" />
-                                                    <span><strong>Real-Time APIs</strong> for weather forecasting, mandi prices, and soil data.</span>
-                                                </li>
-                                                <li className="flex gap-3">
-                                                    <span className="w-1.5 h-1.5 rounded-full bg-purple-500 mt-2.5 shrink-0" />
-                                                    <span><strong>Advanced Features:</strong> Image-based crop disease detection & Voice-based interaction in regional languages.</span>
-                                                </li>
-                                                <li className="flex gap-3">
-                                                    <span className="w-1.5 h-1.5 rounded-full bg-purple-500 mt-2.5 shrink-0" />
-                                                    <span><strong>Mobile App</strong> with offline support and low-bandwidth optimization for rural accessibility.</span>
-                                                </li>
-                                            </ul>
-                                        </div>
-                                    </div>
+                            <div className="overflow-y-auto p-6 space-y-4 text-xs sm:text-sm text-slate-700 dark:text-slate-300">
+                                <div className="p-4 rounded-2xl bg-lime-50 dark:bg-lime-950/40 border border-lime-200 dark:border-lime-800 text-lime-900 dark:text-lime-200">
+                                    <strong>🌾 E-Ganna & Sugar Mill Intermediary:</strong> Direct connector to state sugarcane commissioner portals (`caneup.in`) for 12-column Satta calendars, active supply slips, and weighment DBT payments.
                                 </div>
-                            </div>
-
-                            {/* Footer */}
-                            <div className="p-6 border-t border-gray-100 bg-gray-50 text-right shrink-0">
-                                <button
-                                    onClick={() => setShowRoadmap(false)}
-                                    className="px-8 py-2.5 bg-gray-800 hover:bg-gray-900 text-white font-semibold rounded-xl transition-all shadow-lg hover:shadow-xl transform active:scale-95"
-                                >
-                                    Close Roadmap
-                                </button>
+                                <div className="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200">
+                                    <strong>🧪 Soil Health & NPK Calculator:</strong> Precision commercial fertilizer bag dosage (DAP, Urea, Potash) based on lab test reports with soil pH correction.
+                                </div>
+                                <div className="p-4 rounded-2xl bg-cyan-50 dark:bg-cyan-950/40 border border-cyan-200 dark:border-cyan-800 text-cyan-900 dark:text-cyan-200">
+                                    <strong>📅 Crop Calendar & Khet Khata:</strong> Crop growth milestones, split fertilizing reminders, and daily farm cashbook expense ledger.
+                                </div>
+                                <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-200">
+                                    <strong>🤝 Krishi Bazar & Custom Hiring:</strong> Direct farmer produce/seeds marketplace and hour-based tractor & spray drone machinery rental.
+                                </div>
                             </div>
                         </motion.div>
                     </motion.div>

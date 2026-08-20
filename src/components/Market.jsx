@@ -1,601 +1,822 @@
-
-import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Upload, Search, Mic, Sun, Moon, Download, Trash2, Edit3, Sparkles, MessageSquare } from "lucide-react";
+import {
+    Newspaper,
+    TrendingUp,
+    TrendingDown,
+    DollarSign,
+    Volume2,
+    VolumeX,
+    Share2,
+    Calendar,
+    ArrowLeft,
+    Search,
+    Building2,
+    Truck,
+    CheckCircle2,
+    AlertCircle,
+    Vote,
+    Mic,
+    MessageSquare,
+    Send,
+    Sparkles,
+    Printer,
+    ExternalLink,
+    Filter,
+    ShieldCheck
+} from "lucide-react";
+import {
+    AGRI_NEWS_ARTICLES,
+    LIVE_MANDI_RATES,
+    MULTI_MANDI_ARBITRAGE,
+    DAILY_FARMER_POLL
+} from "../data/agriNewsData";
 import { getAIResponse } from "../utils/geminiAPI";
-
-
-const CATEGORIES = ["general", "soil", "fertilizer", "pesticide", "crop"];
-const STORAGE_KEY = "farmerQALocal";
-
-const SAMPLE_QUESTIONS = [
-  { question: 'How do I improve soil fertility for wheat?', category: 'soil', answer: 'Use crop rotation and organic manure.', status: 'approved', imageUrl: null },
-  { question: 'Which fertilizer is best for paddy?', category: 'fertilizer', answer: 'Use nitrogen-rich fertilizer at the right stage.', status: 'approved', imageUrl: null },
-  { question: 'How to control pests in tomato plants?', category: 'pesticide', answer: 'Use neem oil or recommended pesticides carefully.', status: 'approved', imageUrl: null },
-  { question: 'When should I harvest maize?', category: 'crop', answer: 'Harvest when the kernels are dry and hard.', status: 'approved', imageUrl: null },
-  { question: 'How to store harvested crops safely?', category: 'general', answer: 'Keep them dry and protected from pests.', status: 'approved', imageUrl: null },
-  { question: 'Best irrigation methods for vegetables?', category: 'general', answer: 'Drip irrigation saves water and improves yield.', status: 'approved', imageUrl: null },
-  { question: 'How to prepare compost at home?', category: 'soil', answer: 'Use kitchen waste and cow dung for composting.', status: 'approved', imageUrl: null },
-  { question: 'Which crop rotation improves soil health?', category: 'soil', answer: 'Rotate legumes with cereals for nitrogen fixation.', status: 'approved', imageUrl: null },
-  { question: 'How often should I water my orchard?', category: 'general', answer: 'Water based on soil moisture and tree type.', status: 'approved', imageUrl: null },
-  { question: 'Safe pesticide usage practices?', category: 'pesticide', answer: 'Follow label instructions and wear protective gear.', status: 'approved', imageUrl: null },
-  { question: 'How to increase milk production in cows?', category: 'general', answer: 'Provide nutritious feed and clean water.', status: 'approved', imageUrl: null },
-  { question: 'Which varieties of rice are high yielding?', category: 'crop', answer: 'Use certified seeds of high-yield varieties.', status: 'approved', imageUrl: null },
-  { question: 'How to reduce post-harvest losses?', category: 'general', answer: 'Use proper storage and quick processing.', status: 'approved', imageUrl: null },
-  { question: 'How to test soil pH at home?', category: 'soil', answer: 'Use a soil testing kit or pH meter.', status: 'approved', imageUrl: null },
-  { question: 'Organic ways to repel insects?', category: 'pesticide', answer: 'Plant marigold or use neem extract sprays.', status: 'approved', imageUrl: null },
-  { question: 'When to sow tomato seeds indoors?', category: 'crop', answer: 'Start seeds 6-8 weeks before transplanting.', status: 'approved', imageUrl: null },
-  { question: 'Tips to prevent soil erosion?', category: 'soil', answer: 'Use contour plowing and cover crops.', status: 'approved', imageUrl: null },
-  { question: 'Best fertilizers for organic farming?', category: 'fertilizer', answer: 'Use compost, bone meal, and green manure.', status: 'approved', imageUrl: null },
-  { question: 'How to detect nutrient deficiency in crops?', category: 'soil', answer: 'Observe leaf color and growth patterns.', status: 'approved', imageUrl: null },
-  { question: 'How to increase tomato yield?', category: 'crop', answer: 'Prune regularly and provide adequate sunlight.', status: 'approved', imageUrl: null }
-];
+import { useFarmStore, translations } from "../utils/languageStore";
 
 export default function Market() {
-  const [qaList, setQaList] = useState([]);
-  const [newQuestion, setNewQuestion] = useState("");
-  const [category, setCategory] = useState("general");
-  const [imageFile, setImageFile] = useState(null);
-  const [imagePreview, setImagePreview] = useState(null);
-  const [showForm, setShowForm] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState('all');
-  const [voiceActive, setVoiceActive] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [darkMode, setDarkMode] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [editingId, setEditingId] = useState(null);
-  const [editAnswer, setEditAnswer] = useState("");
-  const recognitionRef = useRef(null);
-  const recognizing = useRef(false);
-  const fileInputRef = useRef(null);
+    const { language } = useFarmStore();
+    const t = translations[language] || translations.en;
 
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        setQaList(JSON.parse(saved));
-      } else {
-        setQaList(SAMPLE_QUESTIONS);
-      }
-    } catch {
-      setQaList(SAMPLE_QUESTIONS);
-    }
-  }, []);
+    const [activeTab, setActiveTab] = useState("news"); // 'news' | 'mandi' | 'arbitrage' | 'advisory' | 'community'
 
-  useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(qaList));
-    } catch { }
-  }, [qaList]);
+    // News state
+    const [newsCategory, setNewsCategory] = useState("ALL");
+    const [newsSearch, setNewsSearch] = useState("");
+    const [speakingArticleId, setSpeakingArticleId] = useState(null);
+    const speechSynthRef = useRef(null);
 
-  useEffect(() => {
-    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      const recognition = new SpeechRecognition();
-      recognition.lang = 'en-US';
-      recognition.continuous = false;
-      recognition.interimResults = false;
+    // Mandi state
+    const [selectedMandiCrop, setSelectedMandiCrop] = useState(LIVE_MANDI_RATES[0]);
 
-      recognition.onstart = () => {
-        recognizing.current = true;
-        setVoiceActive(true);
-      };
-      recognition.onend = () => {
-        recognizing.current = false;
-        setVoiceActive(false);
-      };
-      recognition.onresult = (e) => {
-        const transcript = e.results[0][0].transcript;
-        setNewQuestion(transcript);
-      };
-      recognition.onerror = () => {
-        setVoiceActive(false);
-        recognizing.current = false;
-      };
+    // Poll state
+    const [pollVoted, setPollVoted] = useState(false);
+    const [selectedOption, setSelectedOption] = useState(null);
 
-      recognitionRef.current = recognition;
-    }
-  }, []);
+    // Community Q&A state
+    const [qaList, setQaList] = useState([
+        {
+            id: 1,
+            question: "What is the expected MSP procurement rate for Wheat in UP this season?",
+            answer: "The Government of India has fixed the Wheat MSP at ₹2,275 per quintal. UP procurement centers are actively accepting registrations via e-Uparjan.",
+            author: "Ramesh Kumar (Meerut)",
+            category: "mandi",
+            time: "2 hours ago"
+        },
+        {
+            id: 2,
+            question: "How can I apply for a 60% subsidy on a 5HP solar pump under PM-KUSUM?",
+            answer: "You can apply through the UPNEDA / state renewable portal with your land Khasra-Khatauni, Aadhaar, and bank passbook under PM-KUSUM Component-B.",
+            author: "Sukhwinder Singh (Ludhiana)",
+            category: "subsidy",
+            time: "5 hours ago"
+        }
+    ]);
+    const [userQuestion, setUserQuestion] = useState("");
+    const [isGeneratingAnswer, setIsGeneratingAnswer] = useState(false);
+    const [isListening, setIsListening] = useState(false);
+    const recognitionRef = useRef(null);
 
-  const startVoice = useCallback(() => {
-    if (recognitionRef.current && !recognizing.current) {
-      recognitionRef.current.start();
-    }
-  }, []);
+    useEffect(() => {
+        if ("speechSynthesis" in window) {
+            speechSynthRef.current = window.speechSynthesis;
+        }
+        return () => {
+            if (speechSynthRef.current) speechSynthRef.current.cancel();
+        };
+    }, []);
 
-  useEffect(() => {
-    if (imageFile) {
-      const preview = URL.createObjectURL(imageFile);
-      setImagePreview(preview);
-      return () => URL.revokeObjectURL(preview);
-    } else {
-      setImagePreview(null);
-    }
-  }, [imageFile]);
+    // Speech recognition for Voice Question
+    useEffect(() => {
+        const SpeechRecognition =
+            window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (SpeechRecognition) {
+            const recognition = new SpeechRecognition();
+            recognition.lang = language === "hi" ? "hi-IN" : "en-IN";
+            recognition.continuous = false;
+            recognition.interimResults = false;
 
-  const addQuestion = async (e) => {
-    e.preventDefault();
-    if (!newQuestion.trim()) return;
-    setIsLoading(true);
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                setUserQuestion(transcript);
+                setIsListening(false);
+            };
 
-    const newQA = {
-      id: Date.now(),
-      question: newQuestion.trim(),
-      category,
-      answer: '⏳ Generating answer...',
-      status: 'pending',
-      imageUrl: imageFile ? imageFile.name : null,
-      timestamp: new Date().toISOString(),
-      imageFile
+            recognition.onerror = () => setIsListening(false);
+            recognition.onend = () => setIsListening(false);
+
+            recognitionRef.current = recognition;
+        }
+    }, [language]);
+
+    const handleToggleVoice = () => {
+        if (!recognitionRef.current) {
+            alert("Speech recognition not supported in this browser.");
+            return;
+        }
+        if (isListening) {
+            recognitionRef.current.stop();
+            setIsListening(false);
+        } else {
+            setIsListening(true);
+            recognitionRef.current.start();
+        }
     };
 
-    // Add question immediately with pending status
-    setQaList(prev => [newQA, ...prev]);
-    resetForm();
-    setShowForm(false);
+    // Text to Speech for News Articles
+    const handleToggleSpeak = (article) => {
+        if (!speechSynthRef.current) return;
 
-    try {
-      // Get AI-generated answer from Gemini API
-      const aiAnswer = await getAIResponse(newQuestion.trim());
+        if (speakingArticleId === article.id) {
+            speechSynthRef.current.cancel();
+            setSpeakingArticleId(null);
+            return;
+        }
 
-      // Update the question with the AI answer
-      setQaList(prev => prev.map(q =>
-        q.id === newQA.id
-          ? { ...q, answer: aiAnswer, status: 'approved' }
-          : q
-      ));
-    } catch (error) {
-      console.error('Error generating AI answer:', error);
-      // Update with error message
-      setQaList(prev => prev.map(q =>
-        q.id === newQA.id
-          ? { ...q, answer: 'Unable to generate answer. Please try again later.', status: 'pending' }
-          : q
-      ));
-    } finally {
-      setIsLoading(false);
-    }
-  };
+        speechSynthRef.current.cancel();
+        const textToRead = `${article.title}. ${article.summary}. Important Takeaway: ${article.importantTakeaway}`;
+        const utterance = new SpeechSynthesisUtterance(textToRead);
+        utterance.rate = 0.95;
+        utterance.onend = () => setSpeakingArticleId(null);
+        utterance.onerror = () => setSpeakingArticleId(null);
 
-  const resetForm = () => {
-    setNewQuestion('');
-    setCategory('general');
-    setImageFile(null);
-    setImagePreview(null);
-    if (fileInputRef.current) fileInputRef.current.value = '';
-  };
-
-  const approveAnswer = useCallback((id, suggestedAnswer) => {
-    setQaList(prev => prev.map(q =>
-      q.id === id
-        ? { ...q, answer: suggestedAnswer || 'Answered by expert.', status: 'approved' }
-        : q
-    ));
-  }, []);
-
-  const deleteQuestion = useCallback((id) => {
-    setQaList(prev => prev.filter(q => q.id !== id));
-  }, []);
-
-  const startEdit = useCallback((id, currentAnswer) => {
-    setEditingId(id);
-    setEditAnswer(currentAnswer);
-  }, []);
-
-  const saveEdit = useCallback((id) => {
-    setQaList(prev => prev.map(q =>
-      q.id === id ? { ...q, answer: editAnswer.trim() || q.answer } : q
-    ));
-    setEditingId(null);
-    setEditAnswer('');
-  }, [editAnswer]);
-
-  const cancelEdit = () => {
-    setEditingId(null);
-    setEditAnswer('');
-  };
-
-  const filteredList = useMemo(() => {
-    return qaList.filter(q =>
-      (categoryFilter === 'all' || q.category === categoryFilter) &&
-      q.question.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [qaList, searchTerm, categoryFilter]);
-
-  const itemsPerPage = 6;
-  const totalPages = Math.ceil(filteredList.length / itemsPerPage);
-  const displayedList = useMemo(() =>
-    filteredList.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage),
-    [filteredList, currentPage]);
-
-  const exportData = () => {
-    const dataStr = JSON.stringify(qaList, null, 2);
-    const dataBlob = new Blob([dataStr], { type: 'application/json' });
-    const url = URL.createObjectURL(dataBlob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `farmer-qa-${new Date().toISOString().split('T')[0]}.json`;
-    link.click();
-    URL.revokeObjectURL(url);
-  };
-
-  const getCategoryColor = (cat) => {
-    const colors = {
-      general: 'from-blue-400 to-blue-600',
-      soil: 'from-green-400 to-emerald-600',
-      fertilizer: 'from-yellow-400 to-orange-500',
-      pesticide: 'from-red-400 to-pink-600',
-      crop: 'from-purple-400 to-indigo-600'
+        setSpeakingArticleId(article.id);
+        speechSynthRef.current.speak(utterance);
     };
-    return colors[cat] || colors.general;
-  };
 
-  return (
-    <div className={`${darkMode ? 'bg-gray-900 text-white' : 'bg-gradient-to-br from-green-50 via-emerald-50 to-blue-50 text-gray-900'} min-h-screen font-sans transition-all duration-300 p-4 md:p-8 relative overflow-hidden`}>
+    const handleShareWhatsApp = (article) => {
+        const text = encodeURIComponent(
+            `🌾 *EcoFarm Agri News*\n\n*${article.title}*\n\n${article.summary}\n\n👉 Important Takeaway: ${article.importantTakeaway}\n\nRead more on EcoFarm: http://localhost:3000/News`
+        );
+        window.open(`https://api.whatsapp.com/send?text=${text}`, "_blank");
+    };
 
-      {/* Animated Background Elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <motion.div
-          animate={{
-            scale: [1, 1.2, 1],
-            rotate: [0, 90, 180],
-            opacity: [0.1, 0.2, 0.1]
-          }}
-          transition={{ duration: 20, repeat: Infinity }}
-          className="absolute top-20 right-20 w-96 h-96 bg-green-400/20 rounded-full blur-3xl"
-        />
-        <motion.div
-          animate={{
-            scale: [1.2, 1, 1.2],
-            rotate: [180, 90, 0],
-            opacity: [0.15, 0.25, 0.15]
-          }}
-          transition={{ duration: 25, repeat: Infinity }}
-          className="absolute bottom-20 left-20 w-[500px] h-[500px] bg-blue-400/15 rounded-full blur-3xl"
-        />
-      </div>
+    const handleVotePoll = (optId) => {
+        setSelectedOption(optId);
+        setPollVoted(true);
+    };
 
-      <div className="max-w-7xl mx-auto relative z-10">
-        {/* Header */}
-        <motion.header
-          initial={{ opacity: 0, y: -50 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-10 gap-6"
-        >
-          <div className="flex-1">
-            <motion.div
-              initial={{ scale: 0, rotate: -180 }}
-              animate={{ scale: 1, rotate: 0 }}
-              transition={{ type: "spring", stiffness: 200, delay: 0.2 }}
-              className="inline-flex items-center px-6 py-3 rounded-full bg-gradient-to-r from-green-500 via-emerald-600 to-teal-600 text-white shadow-2xl mb-4"
-            >
-              <motion.div
-                animate={{ rotate: [0, 360] }}
-                transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-              >
-                <MessageSquare className="w-7 h-7 mr-3" />
-              </motion.div>
-              <h1 className="text-3xl font-black">Farmer Q&A Hub</h1>
-              <Sparkles className="w-6 h-6 ml-3" />
-            </motion.div>
-            <p className="text-lg text-gray-600 dark:text-gray-300 ml-2">
-              Ask questions • Upload crop images • Voice input • Expert answers
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            <motion.button
-              whileHover={{ scale: 1.05, boxShadow: "0 10px 30px rgba(16, 185, 129, 0.3)" }}
-              whileTap={{ scale: 0.95 }}
-              onClick={exportData}
-              className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-2xl hover:shadow-xl transition-all shadow-lg font-semibold"
-            >
-              <Download size={20} /> Export
-            </motion.button>
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setDarkMode(!darkMode)}
-              className="flex items-center gap-2 px-6 py-3 border-2 border-gray-300 dark:border-gray-600 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl hover:shadow-lg transition-all font-semibold"
-            >
-              {darkMode ? <Sun size={20} /> : <Moon size={20} />}
-            </motion.button>
-          </div>
-        </motion.header>
+    const handleAskQuestion = async (e) => {
+        e.preventDefault();
+        if (!userQuestion.trim()) return;
 
-        {/* Add Question Button */}
-        <motion.button
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          whileHover={{ scale: 1.02, boxShadow: "0 15px 40px rgba(16, 185, 129, 0.3)" }}
-          whileTap={{ scale: 0.98 }}
-          onClick={() => setShowForm(!showForm)}
-          className="w-full lg:w-auto px-8 py-4 bg-gradient-to-r from-green-500 via-emerald-600 to-teal-600 text-white rounded-2xl mb-8 hover:shadow-2xl transition-all shadow-xl font-bold text-lg"
-        >
-          {showForm ? "✕ Cancel" : "➕ Add New Question"}
-        </motion.button>
+        const newQ = {
+            id: Date.now(),
+            question: userQuestion.trim(),
+            answer: "⏳ Generating expert agronomist response...",
+            author: "You (Verified Kisan)",
+            category: "general",
+            time: "Just now"
+        };
 
-        {/* Form */}
-        <AnimatePresence>
-          {showForm && (
-            <motion.div
-              initial={{ opacity: 0, y: 30, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -30, scale: 0.95 }}
-              transition={{ type: "spring", stiffness: 300, damping: 30 }}
-              className="bg-white/90 dark:bg-gray-800/95 backdrop-blur-2xl shadow-2xl border-2 border-white/50 dark:border-gray-700/50 rounded-3xl p-8 mb-10"
-            >
-              <form onSubmit={addQuestion} className="space-y-6">
-                <div className="relative">
-                  <textarea
-                    value={newQuestion}
-                    onChange={e => setNewQuestion(e.target.value)}
-                    placeholder="What's your farming question? Be specific for better answers..."
-                    className="w-full h-32 border-2 border-gray-200 dark:border-gray-600 rounded-2xl p-5 focus:ring-4 focus:ring-green-400/30 focus:border-green-500 dark:bg-gray-700/50 dark:text-white resize-none transition-all text-lg"
-                    required
-                  />
-                  {recognitionRef.current && (
-                    <motion.button
-                      type="button"
-                      onClick={startVoice}
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.9 }}
-                      className={`absolute right-4 top-4 p-3 rounded-full transition-all ${voiceActive
-                        ? 'bg-red-500 text-white shadow-xl shadow-red-300 animate-pulse'
-                        : 'bg-gradient-to-r from-green-100 to-emerald-100 dark:from-gray-700 dark:to-gray-600 hover:from-green-200 hover:to-emerald-200'
-                        }`}
-                    >
-                      <Mic size={20} />
-                    </motion.button>
-                  )}
-                </div>
+        setQaList([newQ, ...qaList]);
+        setUserQuestion("");
+        setIsGeneratingAnswer(true);
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block mb-3 font-bold text-sm text-gray-700 dark:text-gray-200">Category:</label>
-                    <select
-                      className="w-full border-2 border-gray-200 dark:border-gray-600 p-4 rounded-2xl dark:bg-gray-700/50 dark:text-white focus:ring-4 focus:ring-blue-400/30 focus:border-blue-500 transition-all font-medium"
-                      value={category}
-                      onChange={e => setCategory(e.target.value)}
-                    >
-                      {CATEGORIES.map(cat => (
-                        <option key={cat} value={cat}>{cat.charAt(0).toUpperCase() + cat.slice(1)}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block mb-3 font-bold text-sm text-gray-700 dark:text-gray-200 flex items-center gap-2">
-                      <Upload size={18} /> Crop Image (optional)
-                    </label>
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/*"
-                      onChange={e => setImageFile(e.target.files?.[0] || null)}
-                      className="w-full border-2 border-dashed border-gray-300 dark:border-gray-600 p-4 rounded-2xl hover:border-green-500 transition-all file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-green-100 file:text-green-700 hover:file:bg-green-200 dark:file:bg-gray-700 dark:file:text-white cursor-pointer"
-                    />
-                    {imagePreview && (
-                      <motion.div
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        className="mt-3"
-                      >
-                        <img src={imagePreview} alt="Preview" className="w-full h-40 object-cover rounded-2xl shadow-lg" />
-                      </motion.div>
-                    )}
-                  </div>
-                </div>
+        try {
+            const aiAnswer = await getAIResponse(
+                `Farmer Agricultural Question: "${newQ.question}". Provide a helpful, clear answer for an Indian farmer with practical steps.`
+            );
+            setQaList((prev) =>
+                prev.map((item) =>
+                    item.id === newQ.id ? { ...item, answer: aiAnswer } : item
+                )
+            );
+        } catch (err) {
+            setQaList((prev) =>
+                prev.map((item) =>
+                    item.id === newQ.id
+                        ? {
+                              ...item,
+                              answer: "Recommended action: Please check with your nearest APMC Mandi secretary or block agriculture officer."
+                          }
+                        : item
+                )
+            );
+        } finally {
+            setIsGeneratingAnswer(false);
+        }
+    };
 
-                <div className="flex gap-4 pt-2">
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    type="submit"
-                    disabled={isLoading || !newQuestion.trim()}
-                    className="flex-1 px-8 py-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-2xl hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg font-bold text-lg"
-                  >
-                    {isLoading ? 'Adding...' : 'Submit Question'}
-                  </motion.button>
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    type="button"
-                    onClick={resetForm}
-                    className="px-8 py-4 border-2 border-gray-300 dark:border-gray-600 rounded-2xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-all font-semibold"
-                  >
-                    Clear
-                  </motion.button>
-                </div>
-              </form>
-            </motion.div>
-          )}
-        </AnimatePresence>
+    const newsCategories = [
+        "ALL",
+        "Govt Policies & Subsidies",
+        "Weather & Agro-Meteorology",
+        "Commodity & Mandi Trends",
+        "Agritech & Innovation"
+    ];
 
-        {/* Filters */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-          className="flex flex-col lg:flex-row gap-4 mb-8"
-        >
-          <div className="flex-1 relative">
-            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={22} />
-            <input
-              value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
-              placeholder={`Search ${filteredList.length} questions...`}
-              className="w-full pl-14 pr-4 py-4 border-2 border-gray-200 dark:border-gray-600 rounded-2xl dark:bg-gray-700/50 dark:text-white focus:ring-4 focus:ring-green-400/30 focus:border-green-500 transition-all font-medium text-lg backdrop-blur-sm bg-white/80"
-            />
-          </div>
-          <select
-            className="border-2 border-gray-200 dark:border-gray-600 p-4 rounded-2xl dark:bg-gray-700/50 dark:text-white w-full lg:w-56 focus:ring-4 focus:ring-purple-400/30 focus:border-purple-500 transition-all font-semibold text-lg backdrop-blur-sm bg-white/80"
-            value={categoryFilter}
-            onChange={e => setCategoryFilter(e.target.value)}
-          >
-            <option value="all">All Categories</option>
-            {CATEGORIES.map(cat => <option key={cat} value={cat}>{cat.charAt(0).toUpperCase() + cat.slice(1)}</option>)}
-          </select>
-        </motion.div>
+    const filteredNews = AGRI_NEWS_ARTICLES.filter((article) => {
+        const matchesCategory =
+            newsCategory === "ALL" || article.category === newsCategory;
+        const q = newsSearch.toLowerCase().trim();
+        const matchesSearch =
+            !q ||
+            article.title.toLowerCase().includes(q) ||
+            article.summary.toLowerCase().includes(q);
+        return matchesCategory && matchesSearch;
+    });
 
-        {/* Sample Questions Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-          className="mb-8"
-        >
-          <h3 className="text-lg font-bold text-gray-700 dark:text-gray-200 mb-4 flex items-center gap-2">
-            <Sparkles size={20} className="text-green-500" />
-            Popular Questions - Click to Ask
-          </h3>
-          <div className="flex flex-wrap gap-3">
-            {[
-              'How do I improve soil fertility for wheat?',
-              'Which fertilizer is best for paddy?',
-              'How to control pests in tomato plants?',
-              'Best irrigation methods for vegetables?',
-              'How to prepare compost at home?'
-            ].map((q, idx) => (
-              <motion.button
-                key={idx}
-                whileHover={{ scale: 1.05, y: -2 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => {
-                  setNewQuestion(q);
-                  setShowForm(true);
-                }}
-                className="px-4 py-2 bg-gradient-to-r from-green-100 to-emerald-100 dark:from-gray-700 dark:to-gray-600 hover:from-green-200 hover:to-emerald-200 dark:hover:from-gray-600 dark:hover:to-gray-500 rounded-full text-sm font-medium text-gray-700 dark:text-gray-200 border-2 border-green-200 dark:border-gray-600 transition-all shadow-md hover:shadow-lg"
-              >
-                💡 {q}
-              </motion.button>
-            ))}
-          </div>
-        </motion.div>
-
-        {/* Questions Grid */}
-        <motion.div
-          initial="hidden"
-          animate="show"
-          variants={{
-            hidden: { opacity: 0 },
-            show: { opacity: 1, transition: { staggerChildren: 0.1 } }
-          }}
-          className="grid gap-6 md:grid-cols-2 lg:grid-cols-3"
-        >
-          {displayedList.map((q, index) => (
-            <motion.div
-              key={q.id}
-              variants={{
-                hidden: { opacity: 0, y: 30, scale: 0.9 },
-                show: { opacity: 1, y: 0, scale: 1 }
-              }}
-              whileHover={{ y: -8, scale: 1.02, boxShadow: "0 20px 40px rgba(0,0,0,0.15)" }}
-              layout
-              className={`p-6 rounded-3xl shadow-xl border-2 border-white/50 bg-gradient-to-br ${getCategoryColor(q.category)} text-white flex flex-col justify-between transition-all`}
-            >
-              <div className="flex-1">
-                <div className="flex items-start justify-between mb-3">
-                  <div className="inline-block px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full text-xs font-bold uppercase tracking-wider">
-                    {q.category}
-                  </div>
-                  {q.status === 'approved' && (
-                    <div className="px-3 py-1 bg-green-400/30 backdrop-blur-sm rounded-full text-xs font-bold">
-                      ✓ Answered
-                    </div>
-                  )}
-                </div>
-                <h3 className="font-bold text-xl mb-3 leading-tight">{q.question}</h3>
-                {q.imageUrl && <img src={q.imageFile ? URL.createObjectURL(q.imageFile) : ""} alt="Attached" className="w-full h-40 object-cover rounded-2xl mb-3 shadow-lg" />}
-                <p className="text-white/95 text-base mt-3 bg-white/10 backdrop-blur-sm rounded-xl p-3">{q.answer}</p>
-              </div>
-              <div className="flex justify-between items-center mt-4 gap-2 flex-wrap">
-                <div className="flex gap-2 flex-wrap">
-                  {q.status !== 'approved' && (
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => approveAnswer(q.id)}
-                      className="px-4 py-2 bg-green-500 text-white rounded-xl text-sm font-semibold hover:bg-green-600 transition-all shadow-lg"
-                    >
-                      Approve
-                    </motion.button>
-                  )}
-                  {editingId === q.id ? (
-                    <>
-                      <input
-                        value={editAnswer}
-                        onChange={e => setEditAnswer(e.target.value)}
-                        className="px-3 py-2 border-2 border-white rounded-xl text-sm text-gray-900 font-medium"
-                      />
-                      <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        onClick={() => saveEdit(q.id)}
-                        className="px-4 py-2 bg-blue-500 text-white rounded-xl text-sm font-semibold hover:bg-blue-600 transition-all shadow-lg"
-                      >
-                        Save
-                      </motion.button>
-                      <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        onClick={cancelEdit}
-                        className="px-4 py-2 bg-white/20 text-white rounded-xl text-sm font-semibold hover:bg-white/30 transition-all"
-                      >
-                        Cancel
-                      </motion.button>
-                    </>
-                  ) : (
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => startEdit(q.id, q.answer)}
-                      className="px-4 py-2 bg-yellow-400 text-white rounded-xl text-sm font-semibold hover:bg-yellow-500 transition-all flex items-center gap-1 shadow-lg"
-                    >
-                      <Edit3 size={14} /> Edit
-                    </motion.button>
-                  )}
-                </div>
-                <motion.button
-                  whileHover={{ scale: 1.1, rotate: 10 }}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={() => deleteQuestion(q.id)}
-                  className="p-2 rounded-full bg-white/20 hover:bg-red-500 transition-all"
+    return (
+        <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-blue-50 dark:from-slate-950 dark:via-slate-900 dark:to-emerald-950/40 pt-24 pb-16 px-4 sm:px-6 lg:px-8">
+            {/* Top Navigation Bar */}
+            <div className="max-w-7xl mx-auto mb-6 flex items-center justify-between">
+                <Link
+                    to="/"
+                    className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 dark:text-emerald-400 hover:underline bg-white/80 dark:bg-slate-800/80 px-3.5 py-2 rounded-xl shadow-sm border border-emerald-200 dark:border-slate-700 backdrop-blur-sm"
                 >
-                  <Trash2 size={18} />
-                </motion.button>
-              </div>
-            </motion.div>
-          ))}
-        </motion.div>
+                    <ArrowLeft className="w-4 h-4" />
+                    <span>Back to Dashboard</span>
+                </Link>
 
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.5 }}
-            className="flex justify-center items-center gap-3 mt-12 flex-wrap"
-          >
-            {Array.from({ length: totalPages }, (_, i) => (
-              <motion.button
-                key={i}
-                whileHover={{ scale: 1.1, y: -2 }}
-                whileTap={{ scale: 0.9 }}
-                onClick={() => setCurrentPage(i + 1)}
-                className={`px-5 py-3 rounded-2xl font-bold text-lg transition-all ${currentPage === i + 1
-                  ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-xl'
-                  : 'bg-white/80 dark:bg-gray-700/80 text-gray-800 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600 shadow-lg'
-                  }`}
-              >
-                {i + 1}
-              </motion.button>
-            ))}
-          </motion.div>
-        )}
-      </div>
-    </div>
-  );
+                <button
+                    type="button"
+                    onClick={() => window.print()}
+                    className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-700 dark:text-slate-200 bg-white/80 dark:bg-slate-800/80 px-3.5 py-2 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 transition"
+                >
+                    <Printer className="w-4 h-4 text-emerald-600" />
+                    <span>Print Market Report</span>
+                </button>
+            </div>
+
+            {/* Header Hero */}
+            <div className="max-w-7xl mx-auto mb-8 text-center">
+                <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 rounded-full text-xs font-bold uppercase tracking-wider mb-3">
+                    <Newspaper className="w-4 h-4" />
+                    <span>Live Agricultural Journalism & APMC Intelligence (मंडी व समाचार)</span>
+                </div>
+                <h1 className="text-3xl sm:text-4xl font-black bg-gradient-to-r from-gray-900 via-emerald-800 to-teal-700 dark:from-white dark:via-emerald-300 dark:to-teal-200 bg-clip-text text-transparent">
+                    News & APMC Market Intelligence
+                </h1>
+                <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300 max-w-2xl mx-auto mt-1">
+                    Stay informed with verified agricultural policies, live APMC commodity spot prices, multi-mandi arbitrage, and farmer market advisories.
+                </p>
+            </div>
+
+            {/* Live Commodity Ticker */}
+            <div className="max-w-7xl mx-auto mb-8 bg-slate-900 text-white rounded-2xl p-3 shadow-xl overflow-hidden border border-emerald-500/30">
+                <div className="flex items-center gap-4 overflow-x-auto text-xs font-semibold whitespace-nowrap scrollbar-none">
+                    <span className="px-2.5 py-1 bg-emerald-600 rounded-lg text-[10px] font-black uppercase tracking-wider shrink-0 flex items-center gap-1">
+                        <span className="w-2 h-2 rounded-full bg-yellow-300 animate-ping" />
+                        LIVE APMC TICKER
+                    </span>
+                    {LIVE_MANDI_RATES.map((item) => (
+                        <div key={item.id} className="flex items-center gap-2 px-3 border-r border-slate-700 shrink-0">
+                            <span className="text-slate-300">{item.commodity.split("(")[0]}:</span>
+                            <span className="font-mono font-bold text-white">₹{item.modalPrice}/Qtl</span>
+                            <span
+                                className={`text-[10px] font-bold ${
+                                    item.trend === "UP" ? "text-emerald-400" : "text-rose-400"
+                                }`}
+                            >
+                                {item.change}
+                            </span>
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            {/* 5 Tabs Navigation */}
+            <div className="max-w-7xl mx-auto mb-8 flex justify-center border-b border-slate-200 dark:border-slate-800 gap-2 sm:gap-4 overflow-x-auto text-xs sm:text-sm font-bold">
+                <button
+                    type="button"
+                    onClick={() => setActiveTab("news")}
+                    className={`pb-3 px-3.5 border-b-2 transition flex items-center gap-2 whitespace-nowrap ${
+                        activeTab === "news"
+                            ? "border-emerald-600 text-emerald-600 dark:text-emerald-400"
+                            : "border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-white"
+                    }`}
+                >
+                    <Newspaper className="w-4 h-4" />
+                    <span>📰 Agri-Newsroom ({AGRI_NEWS_ARTICLES.length})</span>
+                </button>
+
+                <button
+                    type="button"
+                    onClick={() => setActiveTab("mandi")}
+                    className={`pb-3 px-3.5 border-b-2 transition flex items-center gap-2 whitespace-nowrap ${
+                        activeTab === "mandi"
+                            ? "border-emerald-600 text-emerald-600 dark:text-emerald-400"
+                            : "border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-white"
+                    }`}
+                >
+                    <TrendingUp className="w-4 h-4" />
+                    <span>📈 Live Mandi Board & Trends</span>
+                </button>
+
+                <button
+                    type="button"
+                    onClick={() => setActiveTab("arbitrage")}
+                    className={`pb-3 px-3.5 border-b-2 transition flex items-center gap-2 whitespace-nowrap ${
+                        activeTab === "arbitrage"
+                            ? "border-emerald-600 text-emerald-600 dark:text-emerald-400"
+                            : "border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-white"
+                    }`}
+                >
+                    <Truck className="w-4 h-4" />
+                    <span>🚚 Multi-Mandi Net Calculator</span>
+                </button>
+
+                <button
+                    type="button"
+                    onClick={() => setActiveTab("advisory")}
+                    className={`pb-3 px-3.5 border-b-2 transition flex items-center gap-2 whitespace-nowrap ${
+                        activeTab === "advisory"
+                            ? "border-emerald-600 text-emerald-600 dark:text-emerald-400"
+                            : "border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-white"
+                    }`}
+                >
+                    <DollarSign className="w-4 h-4" />
+                    <span>⚖️ Sell vs Hold Advisory</span>
+                </button>
+
+                <button
+                    type="button"
+                    onClick={() => setActiveTab("community")}
+                    className={`pb-3 px-3.5 border-b-2 transition flex items-center gap-2 whitespace-nowrap ${
+                        activeTab === "community"
+                            ? "border-emerald-600 text-emerald-600 dark:text-emerald-400"
+                            : "border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-white"
+                    }`}
+                >
+                    <MessageSquare className="w-4 h-4" />
+                    <span>💬 Farmer Q&A & Daily Poll</span>
+                </button>
+            </div>
+
+            {/* ================= TAB 1: AGRI-NEWSROOM ================= */}
+            {activeTab === "news" && (
+                <div className="max-w-7xl mx-auto space-y-6">
+                    {/* Category filter pills & Search */}
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <div className="flex flex-wrap gap-2 text-xs">
+                            {newsCategories.map((cat) => (
+                                <button
+                                    key={cat}
+                                    type="button"
+                                    onClick={() => setNewsCategory(cat)}
+                                    className={`px-3 py-1.5 rounded-xl font-bold transition ${
+                                        newsCategory === cat
+                                            ? "bg-emerald-600 text-white shadow-md"
+                                            : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-100"
+                                    }`}
+                                >
+                                    {cat === "ALL" ? "All News" : cat}
+                                </button>
+                            ))}
+                        </div>
+
+                        <div className="relative w-full sm:w-72">
+                            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                            <input
+                                type="text"
+                                placeholder="Search news & policies..."
+                                value={newsSearch}
+                                onChange={(e) => setNewsSearch(e.target.value)}
+                                className="w-full pl-10 pr-3 py-2 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500"
+                            />
+                        </div>
+                    </div>
+
+                    {/* News Cards Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {filteredNews.map((article) => (
+                            <div
+                                key={article.id}
+                                className="bg-white dark:bg-slate-800 rounded-3xl overflow-hidden shadow-lg border border-slate-200 dark:border-slate-700 flex flex-col justify-between hover:shadow-2xl transition duration-300"
+                            >
+                                <div>
+                                    {/* Image */}
+                                    <div className="relative h-48 overflow-hidden">
+                                        <img
+                                            src={article.image}
+                                            alt={article.title}
+                                            className="w-full h-full object-cover hover:scale-105 transition duration-500"
+                                        />
+                                        <div className="absolute top-3 left-3 px-2.5 py-0.5 bg-black/60 backdrop-blur-md rounded-full text-[10px] font-bold text-white">
+                                            {article.category}
+                                        </div>
+                                    </div>
+
+                                    {/* Article Body */}
+                                    <div className="p-5 space-y-3">
+                                        <div className="flex items-center justify-between text-[11px] text-slate-400">
+                                            <span>{article.date}</span>
+                                            <span>{article.readTime}</span>
+                                        </div>
+
+                                        <h3 className="text-base font-black text-slate-900 dark:text-white leading-snug">
+                                            {article.title}
+                                        </h3>
+
+                                        <p className="text-xs text-slate-600 dark:text-slate-300 line-clamp-3 leading-relaxed">
+                                            {article.summary}
+                                        </p>
+
+                                        {/* Key Takeaway Box */}
+                                        <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 rounded-xl border border-emerald-200 dark:border-emerald-800/50 text-xs">
+                                            <span className="font-bold text-emerald-800 dark:text-emerald-300 block mb-0.5">
+                                                💡 Key Farmer Takeaway:
+                                            </span>
+                                            <span className="text-slate-700 dark:text-slate-300 font-medium">
+                                                {article.importantTakeaway}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Card Footer Actions */}
+                                <div className="p-5 pt-0 flex items-center justify-between border-t border-slate-100 dark:border-slate-700/60 mt-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => handleToggleSpeak(article)}
+                                        className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition ${
+                                            speakingArticleId === article.id
+                                                ? "bg-rose-500 text-white animate-pulse"
+                                                : "bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-emerald-100"
+                                        }`}
+                                    >
+                                        {speakingArticleId === article.id ? (
+                                            <>
+                                                <VolumeX className="w-3.5 h-3.5" /> Stop Audio
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Volume2 className="w-3.5 h-3.5 text-emerald-600" /> Listen Audio
+                                            </>
+                                        )}
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        onClick={() => handleShareWhatsApp(article)}
+                                        className="p-2 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950 rounded-xl transition"
+                                        title="Share on WhatsApp"
+                                    >
+                                        <Share2 className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* ================= TAB 2: LIVE APMC MANDI BOARD ================= */}
+            {activeTab === "mandi" && (
+                <div className="max-w-7xl mx-auto space-y-6">
+                    {/* Mandi Price Table */}
+                    <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 shadow-xl border border-slate-200 dark:border-slate-700">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+                            <div>
+                                <h3 className="text-base font-black text-slate-900 dark:text-white">
+                                    Live APMC Mandi Spot Rates vs Government MSP Floor
+                                </h3>
+                                <p className="text-xs text-slate-500">
+                                    Updated daily from national APMC market yards and AGMARKNET feeds
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left text-xs text-slate-700 dark:text-slate-300">
+                                <thead className="bg-slate-100 dark:bg-slate-900/60 font-bold uppercase text-slate-500">
+                                    <tr>
+                                        <th className="p-3">Commodity</th>
+                                        <th className="p-3">APMC Mandi</th>
+                                        <th className="p-3">Min - Max Price</th>
+                                        <th className="p-3">Modal Price (मॉडल भाव)</th>
+                                        <th className="p-3">Govt MSP</th>
+                                        <th className="p-3">Daily Change</th>
+                                        <th className="p-3">Arrivals (Qtl)</th>
+                                        <th className="p-3">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100 dark:divide-slate-700/60 font-medium">
+                                    {LIVE_MANDI_RATES.map((item) => (
+                                        <tr
+                                            key={item.id}
+                                            onClick={() => setSelectedMandiCrop(item)}
+                                            className={`cursor-pointer transition ${
+                                                selectedMandiCrop.id === item.id
+                                                    ? "bg-emerald-50/70 dark:bg-emerald-950/40"
+                                                    : "hover:bg-slate-50 dark:hover:bg-slate-700/40"
+                                            }`}
+                                        >
+                                            <td className="p-3 font-bold text-slate-900 dark:text-white">
+                                                {item.commodity}
+                                            </td>
+                                            <td className="p-3 text-slate-500">{item.mandi}</td>
+                                            <td className="p-3">
+                                                ₹{item.minPrice} - ₹{item.maxPrice}
+                                            </td>
+                                            <td className="p-3 font-black text-sm text-emerald-600 dark:text-emerald-400">
+                                                ₹{item.modalPrice} / Qtl
+                                            </td>
+                                            <td className="p-3 font-mono font-bold text-slate-700 dark:text-slate-300">
+                                                ₹{item.mspPrice}
+                                            </td>
+                                            <td className="p-3">
+                                                <span
+                                                    className={`px-2 py-0.5 rounded-md font-bold text-[10px] ${
+                                                        item.trend === "UP"
+                                                            ? "bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300"
+                                                            : "bg-rose-100 dark:bg-rose-950 text-rose-800 dark:text-rose-300"
+                                                    }`}
+                                                >
+                                                    {item.change}
+                                                </span>
+                                            </td>
+                                            <td className="p-3">{item.dailyArrivalQtl.toLocaleString()} Qtl</td>
+                                            <td className="p-3">
+                                                <button
+                                                    type="button"
+                                                    className="px-2.5 py-1 bg-slate-100 dark:bg-slate-700 hover:bg-emerald-600 hover:text-white rounded-lg text-[11px] font-bold transition"
+                                                >
+                                                    View Trend
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    {/* 7-Day Historical Trend Sparkline for Selected Commodity */}
+                    {selectedMandiCrop && (
+                        <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 shadow-xl border border-slate-200 dark:border-slate-700 space-y-4">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <span className="text-[10px] font-bold text-emerald-600 uppercase">
+                                        7-Day Price Movement
+                                    </span>
+                                    <h4 className="text-base font-black text-slate-900 dark:text-white">
+                                        {selectedMandiCrop.commodity} @ {selectedMandiCrop.mandi}
+                                    </h4>
+                                </div>
+                                <div className="text-right">
+                                    <span className="text-lg font-black text-emerald-600">
+                                        ₹{selectedMandiCrop.modalPrice} / Qtl
+                                    </span>
+                                    <span className="block text-[10px] text-slate-400">
+                                        MSP Floor: ₹{selectedMandiCrop.mspPrice}
+                                    </span>
+                                </div>
+                            </div>
+
+                            {/* Bar Chart Representation of 7 Days */}
+                            <div className="grid grid-cols-7 gap-2 pt-4 items-end h-36">
+                                {selectedMandiCrop.historicalPrices.map((price, idx) => {
+                                    const min = Math.min(...selectedMandiCrop.historicalPrices);
+                                    const max = Math.max(...selectedMandiCrop.historicalPrices);
+                                    const heightPercent =
+                                        max === min ? 70 : 40 + ((price - min) / (max - min)) * 50;
+                                    return (
+                                        <div key={idx} className="flex flex-col items-center gap-1.5 h-full justify-end">
+                                            <span className="text-[10px] font-mono font-bold text-slate-700 dark:text-slate-300">
+                                                ₹{price}
+                                            </span>
+                                            <div
+                                                style={{ height: `${heightPercent}%` }}
+                                                className="w-full bg-gradient-to-t from-emerald-600 to-teal-400 rounded-t-xl transition-all duration-500"
+                                            />
+                                            <span className="text-[9px] text-slate-400 font-bold">
+                                                Day {idx + 1}
+                                            </span>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {/* ================= TAB 3: MULTI-MANDI ARBITRAGE ================= */}
+            {activeTab === "arbitrage" && (
+                <div className="max-w-7xl mx-auto space-y-6">
+                    <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 shadow-xl border border-slate-200 dark:border-slate-700 space-y-6">
+                        <div>
+                            <h3 className="text-base font-black text-slate-900 dark:text-white">
+                                Multi-Mandi Distance & Transport Freight Net Calculator
+                            </h3>
+                            <p className="text-xs text-slate-500">
+                                Compare prices across 3 nearby mandis factoring in tractor fuel/diesel to calculate your exact in-hand net realization.
+                            </p>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {MULTI_MANDI_ARBITRAGE.map((arb, idx) => (
+                                <div
+                                    key={idx}
+                                    className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-700/40 border border-slate-200 dark:border-slate-600 space-y-4"
+                                >
+                                    <div className="flex items-center justify-between">
+                                        <h4 className="text-sm font-black text-emerald-600 dark:text-emerald-400">
+                                            {arb.crop}
+                                        </h4>
+                                        <span className="text-[10px] font-bold bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 px-2 py-0.5 rounded-md">
+                                            Arbitrage Analysis
+                                        </span>
+                                    </div>
+
+                                    <div className="space-y-2 text-xs">
+                                        {arb.mandis.map((m, mIdx) => (
+                                            <div
+                                                key={mIdx}
+                                                className="p-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-between"
+                                            >
+                                                <div>
+                                                    <span className="font-bold text-slate-900 dark:text-white block">
+                                                        {m.name} ({m.distanceKm} km)
+                                                    </span>
+                                                    <span className="text-[11px] text-slate-500">
+                                                        Gross: ₹{m.pricePerQtl} - Freight: ₹{m.transportPerQtl}
+                                                    </span>
+                                                </div>
+                                                <div className="text-right">
+                                                    <span className="text-sm font-black text-emerald-600 block">
+                                                        ₹{m.netInHand}
+                                                    </span>
+                                                    <span className="text-[9px] text-slate-400">Net in Hand</span>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    <div className="p-3 bg-yellow-50 dark:bg-yellow-950/30 rounded-xl border border-yellow-300 dark:border-yellow-800 text-xs font-bold text-yellow-900 dark:text-yellow-200">
+                                        💡 <strong>Arbitrage Recommendation:</strong> {arb.bestOption}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ================= TAB 4: SELL VS HOLD ADVISORY ================= */}
+            {activeTab === "advisory" && (
+                <div className="max-w-7xl mx-auto space-y-6">
+                    <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 shadow-xl border border-slate-200 dark:border-slate-700 space-y-6">
+                        <div>
+                            <h3 className="text-base font-black text-slate-900 dark:text-white">
+                                Commodity Market Sentiment & "Sell vs. Hold" Advisory
+                            </h3>
+                            <p className="text-xs text-slate-500">
+                                Data-driven guidance based on terminal market supply shocks, government buffer procurement, and seasonal demand.
+                            </p>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {LIVE_MANDI_RATES.map((item) => (
+                                <div
+                                    key={item.id}
+                                    className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-700/40 border border-slate-200 dark:border-slate-600 space-y-3 flex flex-col justify-between"
+                                >
+                                    <div>
+                                        <div className="flex items-center justify-between mb-2">
+                                            <span className="font-black text-sm text-slate-900 dark:text-white">
+                                                {item.commodity.split("(")[0]}
+                                            </span>
+                                            <span
+                                                className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase ${
+                                                    item.advisory.includes("HOLD")
+                                                        ? "bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300"
+                                                        : item.advisory.includes("SELL")
+                                                        ? "bg-rose-100 dark:bg-rose-950 text-rose-800 dark:text-rose-300"
+                                                        : "bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300"
+                                                }`}
+                                            >
+                                                {item.advisory.split("(")[0]}
+                                            </span>
+                                        </div>
+
+                                        <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                                            {item.advisoryReason}
+                                        </p>
+                                    </div>
+
+                                    <div className="pt-3 border-t border-slate-200 dark:border-slate-600 flex items-center justify-between text-xs font-bold">
+                                        <span className="text-slate-500">Current Rate:</span>
+                                        <span className="text-emerald-600">₹{item.modalPrice}/Qtl</span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ================= TAB 5: COMMUNITY Q&A & DAILY POLL ================= */}
+            {activeTab === "community" && (
+                <div className="max-w-7xl mx-auto space-y-6">
+                    {/* Daily Farmer Poll */}
+                    <div className="bg-gradient-to-br from-emerald-800 to-teal-900 text-white rounded-3xl p-6 shadow-xl space-y-4">
+                        <div className="flex items-center gap-2">
+                            <Vote className="w-5 h-5 text-yellow-300" />
+                            <h3 className="text-base font-black">Daily Farmer Sentiment Poll</h3>
+                        </div>
+
+                        <p className="text-sm font-semibold text-emerald-100">
+                            {DAILY_FARMER_POLL.question}
+                        </p>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                            {DAILY_FARMER_POLL.options.map((opt) => (
+                                <button
+                                    key={opt.id}
+                                    type="button"
+                                    onClick={() => handleVotePoll(opt.id)}
+                                    className={`p-3.5 rounded-2xl text-left text-xs font-bold transition flex items-center justify-between ${
+                                        selectedOption === opt.id
+                                            ? "bg-yellow-400 text-slate-950 shadow-lg"
+                                            : "bg-white/15 hover:bg-white/25 text-white border border-white/20"
+                                    }`}
+                                >
+                                    <span>{opt.text}</span>
+                                    {pollVoted && (
+                                        <span className="font-mono text-xs">{opt.percentage}%</span>
+                                    )}
+                                </button>
+                            ))}
+                        </div>
+                        {pollVoted && (
+                            <p className="text-[11px] text-emerald-200 text-right">
+                                ✓ Total {DAILY_FARMER_POLL.totalVotes + 1} farmers voted
+                            </p>
+                        )}
+                    </div>
+
+                    {/* Ask Question Form */}
+                    <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 shadow-xl border border-slate-200 dark:border-slate-700 space-y-4">
+                        <h3 className="text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
+                            <Sparkles className="w-5 h-5 text-emerald-600" />
+                            <span>Ask Farmer Discussion Hub (कृषि सवाल पूछें)</span>
+                        </h3>
+
+                        <form onSubmit={handleAskQuestion} className="space-y-3">
+                            <div className="relative">
+                                <textarea
+                                    required
+                                    rows={3}
+                                    placeholder="Ask anything about market prices, fertilizer subsidies, mandi trends..."
+                                    value={userQuestion}
+                                    onChange={(e) => setUserQuestion(e.target.value)}
+                                    className="w-full p-4 pr-12 text-xs font-medium rounded-2xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500 resize-none"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={handleToggleVoice}
+                                    className={`absolute right-3.5 top-3.5 p-2 rounded-xl transition ${
+                                        isListening
+                                            ? "bg-rose-500 text-white animate-pulse"
+                                            : "bg-emerald-100 dark:bg-slate-700 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-200"
+                                    }`}
+                                    title="Voice Mic Input"
+                                >
+                                    <Mic className="w-4 h-4" />
+                                </button>
+                            </div>
+
+                            <div className="flex justify-end">
+                                <button
+                                    type="submit"
+                                    disabled={isGeneratingAnswer || !userQuestion.trim()}
+                                    className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow flex items-center gap-1.5 transition disabled:opacity-50"
+                                >
+                                    <Send className="w-3.5 h-3.5" />
+                                    <span>{isGeneratingAnswer ? "Consulting AI..." : "Post Question"}</span>
+                                </button>
+                            </div>
+                        </form>
+
+                        {/* Q&A List */}
+                        <div className="space-y-3 pt-4 border-t border-slate-200 dark:border-slate-700">
+                            {qaList.map((qa) => (
+                                <div
+                                    key={qa.id}
+                                    className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-700/40 border border-slate-200 dark:border-slate-600 space-y-2 text-xs"
+                                >
+                                    <div className="flex items-center justify-between">
+                                        <h4 className="font-bold text-slate-900 dark:text-white text-sm">
+                                            {qa.question}
+                                        </h4>
+                                        <span className="text-[10px] text-slate-400">{qa.time}</span>
+                                    </div>
+                                    <p className="text-slate-700 dark:text-slate-300 leading-relaxed bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-200 dark:border-slate-700">
+                                        {qa.answer}
+                                    </p>
+                                    <span className="text-[10px] font-semibold text-emerald-600 block">
+                                        Asked by {qa.author}
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
 }
-
-
-

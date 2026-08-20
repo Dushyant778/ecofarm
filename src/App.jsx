@@ -9,6 +9,7 @@ import Dashboard from "./components/Dashboard";
 import Crops from "./components/Crops";
 import NewsSection from "./components/Market";
 import About from "./components/About";
+import Profile from "./components/Profile";
 
 export default function App() {
     return (
@@ -25,6 +26,7 @@ export default function App() {
                 <Route path="/crops" element={<Crops />} />
                 <Route path="/News" element={<NewsSection />} />
                 <Route path="/About" element={<About />} />
+                <Route path="/profile" element={<Profile />} />
                 {/* 404 Page */}
                 <Route
                     path="*"

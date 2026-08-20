@@ -1,515 +1,492 @@
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
     Leaf,
-    Users,
-    Target,
-    Award,
     Brain,
-    TrendingUp,
+    Users,
     Shield,
-    Zap,
+    Sparkles,
+    CheckCircle2,
+    Award,
     Globe,
-    Heart,
-    Lightbulb,
-    ChevronDown,
-    Mail,
+    Zap,
+    TrendingUp,
     MapPin,
+    Mail,
     Phone,
+    Github,
     Linkedin,
     Twitter,
-    Github
+    ArrowLeft,
+    Send,
+    FlaskConical,
+    FileText,
+    Mic,
+    Building2,
+    Layers,
+    HeartHandshake,
+    Check,
+    HelpCircle
 } from "lucide-react";
+import { useFarmStore, translations } from "../utils/languageStore";
 
 export default function About() {
-    const [activeSection, setActiveSection] = useState(null);
-    const [selectedMember, setSelectedMember] = useState(null);
+    const { language } = useFarmStore();
+    const t = translations[language] || translations.en;
 
-    // Smooth scroll animation variants
-    const fadeInUp = {
-        hidden: { opacity: 0, y: 60 },
-        visible: {
-            opacity: 1,
-            y: 0,
-            transition: { duration: 0.6, ease: "easeOut" }
-        }
+    const [techTab, setTechTab] = useState("vision"); // 'vision' | 'soil' | 'eganna' | 'voice'
+    const [selectedTeamIndex, setSelectedTeamIndex] = useState(null);
+
+    // Contact Form State
+    const [contactForm, setContactForm] = useState({
+        name: "",
+        phone: "",
+        category: "Farmer Support",
+        message: ""
+    });
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [submitSuccess, setSubmitSuccess] = useState(false);
+
+    const handleContactSubmit = (e) => {
+        e.preventDefault();
+        if (!contactForm.name || !contactForm.message) return;
+        setIsSubmitting(true);
+        setTimeout(() => {
+            setIsSubmitting(false);
+            setSubmitSuccess(true);
+            setContactForm({ name: "", phone: "", category: "Farmer Support", message: "" });
+            setTimeout(() => setSubmitSuccess(false), 3000);
+        }, 600);
     };
 
-    const staggerContainer = {
-        hidden: { opacity: 0 },
-        visible: {
-            opacity: 1,
-            transition: {
-                staggerChildren: 0.15,
-                delayChildren: 0.2
-            }
-        }
-    };
-
-    // Core values data
-    const coreValues = [
-        {
-            icon: Leaf,
-            title: "Sustainability",
-            description: "Promoting eco-friendly farming practices for a greener tomorrow",
-            color: "from-green-400 to-emerald-600"
-        },
-        {
-            icon: Brain,
-            title: "Innovation",
-            description: "Leveraging AI and technology to revolutionize agriculture",
-            color: "from-purple-400 to-indigo-600"
-        },
-        {
-            icon: Users,
-            title: "Community",
-            description: "Empowering farmers with knowledge and collaborative support",
-            color: "from-blue-400 to-cyan-600"
-        },
-        {
-            icon: Shield,
-            title: "Reliability",
-            description: "Providing accurate, trustworthy data and recommendations",
-            color: "from-orange-400 to-amber-600"
-        }
+    const impactMetrics = [
+        { value: "12+", label: "Smart Agritech Modules", icon: Zap, sub: "Disease, Soil, Mandi, E-Ganna & more" },
+        { value: "25+", label: "Indian Crops Covered", icon: Leaf, sub: "Kharif, Rabi & Zaid Dossiers" },
+        { value: "5", label: "Vernacular Languages", icon: Globe, sub: "EN, हिन्दी, मराठी, ਪੰਜਾਬੀ, తెలుగు" },
+        { value: "100%", label: "Offline-Resilient", icon: Shield, sub: "Embedded heuristic fallback database" }
     ];
 
-    // Key features
-    const keyFeatures = [
-        {
-            icon: Brain,
-            title: "AI-Powered Insights",
-            description: "Advanced machine learning algorithms for crop recommendations and disease detection",
-            stats: "98% accuracy"
-        },
-        {
-            icon: TrendingUp,
-            title: "Market Intelligence",
-            description: "Real-time mandi prices and market trends to maximize profitability",
-            stats: "500+ markets"
-        },
-        {
-            icon: Zap,
-            title: "Instant Support",
-            description: "24/7 AI assistant to answer farming queries and provide guidance",
-            stats: "89K+ queries"
-        },
-        {
-            icon: Globe,
-            title: "Government Schemes",
-            description: "Access to 500+ government schemes with eligibility matching",
-            stats: "500+ schemes"
-        }
-    ];
-
-    // Team members
     const teamMembers = [
-         {
-            name:"Rohit negi ",
+        {
+            name: "Rohit Negi",
             role: "Instructor",
-            image: "👨‍💼",
-            bio: "",
-            linkedin: "#",
-            twitter: "#"
+            avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80",
+            bio: "Guiding software architecture, project roadmap, and scalable systems.",
+            github: "https://github.com",
+            linkedin: "https://linkedin.com",
+            email: "rohit@ecofarm.ai"
         },
         {
-            name:"Dushyant",
+            name: "Dushyant",
             role: "Developer",
-            image: "👨‍💼",
-            bio: "",
-            linkedin: "#",
-            twitter: "#"
+            avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80",
+            bio: "Architecting high-performance offline PWA state engines, Soil Health NPK bag calculation models, and responsive vernacular UX systems.",
+            github: "https://github.com/Dushyant778",
+            linkedin: "https://linkedin.com",
+            email: "dushyant@ecofarm.ai"
         },
         {
             name: "Aaditya Tandon",
             role: "Database Instructor",
-            image: "👨‍💼",
-            bio: "",
-            linkedin: "#",
-            twitter: "#"
-        },
-
-    ];
-
-    // Statistics
-    const statistics = [
-        { value: "5+", label: "Active Farmers", icon: Users },
-        { value: "23%", label: "Avg Yield Increase", icon: TrendingUp },
-        { value: "500+", label: "Govt Schemes", icon: Award },
-        { value: "98%", label: "AI Accuracy", icon: Brain }
+            avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80",
+            bio: "Database architecture and backend mentorship, agricultural data schema optimization.",
+            github: "https://github.com",
+            linkedin: "https://linkedin.com",
+            email: "aaditya@ecofarm.ai"
+        }
     ];
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-blue-50 overflow-x-hidden">
+        <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-blue-50 dark:from-slate-950 dark:via-slate-900 dark:to-emerald-950/40 pt-24 pb-16 px-4 sm:px-6 lg:px-8">
+            {/* Top Navigation Bar */}
+            <div className="max-w-7xl mx-auto mb-6 flex items-center justify-between">
+                <Link
+                    to="/"
+                    className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 dark:text-emerald-400 hover:underline bg-white/80 dark:bg-slate-800/80 px-3.5 py-2 rounded-xl shadow-sm border border-emerald-200 dark:border-slate-700 backdrop-blur-sm"
+                >
+                    <ArrowLeft className="w-4 h-4" />
+                    <span>Back to Dashboard</span>
+                </Link>
+
+                <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping" />
+                    <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                        EcoFarm Agritech v2.4 Live
+                    </span>
+                </div>
+            </div>
+
             {/* Hero Section */}
-            <motion.div
-                initial="hidden"
-                animate="visible"
-                variants={fadeInUp}
-                className="relative pt-32 pb-20 px-4 sm:px-6 lg:px-8 overflow-hidden"
-            >
-                {/* Animated background elements */}
-                <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                    <motion.div
-                        animate={{
-                            scale: [1, 1.2, 1],
-                            rotate: [0, 180, 360]
-                        }}
-                        transition={{ duration: 20, repeat: Infinity }}
-                        className="absolute top-20 right-20 w-64 h-64 bg-green-300/20 rounded-full blur-3xl"
-                    />
-                    <motion.div
-                        animate={{
-                            scale: [1.2, 1, 1.2],
-                            rotate: [360, 180, 0]
-                        }}
-                        transition={{ duration: 25, repeat: Infinity }}
-                        className="absolute bottom-20 left-20 w-96 h-96 bg-blue-300/20 rounded-full blur-3xl"
-                    />
+            <div className="max-w-7xl mx-auto mb-16 text-center">
+                <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 rounded-full text-xs font-bold uppercase tracking-wider mb-4">
+                    <Sparkles className="w-4 h-4 text-emerald-600" />
+                    <span>AI For Sustainable & Profitable Indian Farming</span>
                 </div>
 
-                <div className="max-w-7xl mx-auto text-center relative z-10">
-                    <motion.div
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        transition={{ type: "spring", stiffness: 200, delay: 0.2 }}
-                        className="inline-flex items-center justify-center w-24 h-24 bg-gradient-to-br from-green-400 via-emerald-500 to-teal-600 rounded-3xl shadow-2xl mb-8"
+                <h1 className="text-4xl sm:text-6xl font-black bg-gradient-to-r from-gray-900 via-emerald-800 to-teal-700 dark:from-white dark:via-emerald-300 dark:to-teal-200 bg-clip-text text-transparent leading-tight mb-4">
+                    About EcoFarm Platform
+                </h1>
+
+                <p className="text-base sm:text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto leading-relaxed">
+                    EcoFarm is a next-generation agritech operating system engineered to democratize precision agronomy, plant pathology AI, and market intelligence for 140+ million Indian farmers.
+                </p>
+            </div>
+
+            {/* Impact Metrics Grid */}
+            <div className="max-w-7xl mx-auto mb-16 grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+                {impactMetrics.map((metric, idx) => (
+                    <div
+                        key={idx}
+                        className="p-6 rounded-3xl bg-white/90 dark:bg-slate-800/90 shadow-xl border border-slate-200 dark:border-slate-700 flex flex-col justify-between"
                     >
-                        <Leaf className="w-14 h-14 text-white" />
-                    </motion.div>
-
-                    <motion.h1
-                        variants={fadeInUp}
-                        className="text-5xl md:text-7xl font-black mb-6 bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 bg-clip-text text-transparent"
-                    >
-                        About EcoFarm
-                    </motion.h1>
-
-                    <motion.p
-                        variants={fadeInUp}
-                        className="text-xl md:text-2xl text-gray-600 max-w-3xl mx-auto mb-8 leading-relaxed"
-                    >
-                        Revolutionizing agriculture through AI-powered insights, empowering farmers
-                        to make data-driven decisions for sustainable and profitable farming.
-                    </motion.p>
-
-                    <motion.div
-                        variants={fadeInUp}
-                        className="flex flex-wrap gap-4 justify-center"
-                    >
-                        <button className="px-8 py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-2xl font-bold shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300">
-                            Get Started
-                        </button>
-                        <button className="px-8 py-4 bg-white/80 backdrop-blur-xl text-green-600 rounded-2xl font-bold shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300 border-2 border-green-200">
-                            Learn More
-                        </button>
-                    </motion.div>
-                </div>
-            </motion.div>
-
-            {/* Statistics Section */}
-            <motion.div
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true, margin: "-100px" }}
-                variants={staggerContainer}
-                className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16"
-            >
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                    {statistics.map((stat, index) => (
-                        <motion.div
-                            key={index}
-                            variants={fadeInUp}
-                            whileHover={{ scale: 1.05, y: -10 }}
-                            className="bg-white/80 backdrop-blur-xl rounded-3xl p-8 shadow-xl border border-white/50 text-center"
-                        >
-                            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-green-400 to-emerald-600 rounded-2xl mb-4">
-                                <stat.icon className="w-8 h-8 text-white" />
-                            </div>
-                            <p className="text-4xl font-black text-gray-900 mb-2">{stat.value}</p>
-                            <p className="text-sm font-semibold text-gray-600">{stat.label}</p>
-                        </motion.div>
-                    ))}
-                </div>
-            </motion.div>
-
-            {/* Mission Section */}
-            <motion.div
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true, margin: "-100px" }}
-                variants={fadeInUp}
-                className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20"
-            >
-                <div className="bg-gradient-to-r from-green-500 via-emerald-600 to-teal-600 rounded-3xl p-12 md:p-16 shadow-2xl text-white relative overflow-hidden">
-                    <motion.div
-                        animate={{ rotate: 360 }}
-                        transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
-                        className="absolute -top-20 -right-20 w-64 h-64 bg-white/10 rounded-full"
-                    />
-                    <motion.div
-                        animate={{ rotate: -360 }}
-                        transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
-                        className="absolute -bottom-20 -left-20 w-80 h-80 bg-white/10 rounded-full"
-                    />
-
-                    <div className="relative z-10">
-                        <div className="flex items-center justify-center mb-8">
-                            <Target className="w-16 h-16 mr-4" />
-                            <h2 className="text-4xl md:text-5xl font-black">Our Mission</h2>
+                        <div className="w-12 h-12 rounded-2xl bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mb-4">
+                            <metric.icon className="w-6 h-6" />
                         </div>
-                        <p className="text-xl md:text-2xl text-center leading-relaxed max-w-4xl mx-auto">
-                            To democratize agricultural technology and empower every farmer with
-                            AI-driven insights, sustainable practices, and market intelligence—
-                            transforming the future of farming one field at a time.
-                        </p>
+                        <div>
+                            <div className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white">
+                                {metric.value}
+                            </div>
+                            <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 mt-1">
+                                {metric.label}
+                            </h3>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                                {metric.sub}
+                            </p>
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            {/* Core Mission & Agritech Pillars */}
+            <div className="max-w-7xl mx-auto mb-16 bg-gradient-to-br from-emerald-800 via-teal-900 to-slate-900 text-white rounded-3xl p-8 sm:p-12 shadow-2xl relative overflow-hidden">
+                <div className="relative z-10 max-w-3xl space-y-4">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-xs font-bold uppercase tracking-wider text-emerald-300">
+                        <HeartHandshake className="w-4 h-4" />
+                        <span>Our Core Mission (हमारा संकल्प)</span>
+                    </div>
+
+                    <h2 className="text-2xl sm:text-4xl font-black leading-tight">
+                        Bridging Lab-to-Land with Voice-First Multilingual AI
+                    </h2>
+
+                    <p className="text-sm sm:text-base text-emerald-100 leading-relaxed font-medium">
+                        Smallholder farmers in India often suffer crop losses due to delayed pest diagnosis, unscientific fertilizer overuse, and middleman price gouging. EcoFarm solves this by combining high-speed AI computer vision with direct APMC mandis, eGanna sugar mill calendars, and ICAR-aligned fertilizer dosage calculators in the farmer's native dialect.
+                    </p>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-4 text-xs">
+                        <div className="p-3 bg-white/10 rounded-2xl backdrop-blur-sm border border-white/15">
+                            <h4 className="font-black text-amber-300 mb-1">🌿 Precision Nutrition</h4>
+                            <p className="text-slate-200">Exact commercial bag dosage preventing soil acidification & nitrogen wastage.</p>
+                        </div>
+                        <div className="p-3 bg-white/10 rounded-2xl backdrop-blur-sm border border-white/15">
+                            <h4 className="font-black text-yellow-300 mb-1">🔬 Vision Pathology</h4>
+                            <p className="text-slate-200">Instant leaf scan with both organic biocontrol and chemical active ingredients.</p>
+                        </div>
+                        <div className="p-3 bg-white/10 rounded-2xl backdrop-blur-sm border border-white/15">
+                            <h4 className="font-black text-cyan-300 mb-1">⚖️ Direct Market Fair Price</h4>
+                            <p className="text-slate-200">Real-time APMC Mandi rates with MSP benchmark floor comparison.</p>
+                        </div>
                     </div>
                 </div>
-            </motion.div>
+            </div>
 
-            {/* Core Values Section */}
-            <motion.div
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true, margin: "-100px" }}
-                variants={staggerContainer}
-                className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20"
-            >
-                <motion.h2
-                    variants={fadeInUp}
-                    className="text-4xl md:text-5xl font-black text-center mb-16 bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent"
-                >
-                    Our Core Values
-                </motion.h2>
+            {/* Interactive Technology Architecture Explorer */}
+            <div className="max-w-7xl mx-auto mb-16 bg-white dark:bg-slate-800 rounded-3xl p-6 sm:p-8 shadow-xl border border-slate-200 dark:border-slate-700 space-y-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <div className="inline-flex items-center gap-2 text-xs font-bold text-emerald-600 uppercase tracking-wider mb-1">
+                            <Layers className="w-4 h-4" />
+                            <span>System Engineering</span>
+                        </div>
+                        <h2 className="text-2xl font-black text-slate-900 dark:text-white">
+                            EcoFarm Technology Architecture
+                        </h2>
+                    </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                    {coreValues.map((value, index) => (
-                        <motion.div
-                            key={index}
-                            variants={fadeInUp}
-                            whileHover={{ y: -15, scale: 1.02 }}
-                            className="bg-white/80 backdrop-blur-xl rounded-3xl p-8 shadow-xl border border-white/50 text-center group cursor-pointer"
-                        >
-                            <motion.div
-                                whileHover={{ rotate: 360, scale: 1.1 }}
-                                transition={{ duration: 0.6 }}
-                                className={`inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br ${value.color} rounded-2xl mb-6 shadow-lg`}
+                    {/* Tech Tabs */}
+                    <div className="flex gap-2 overflow-x-auto text-xs font-bold">
+                        {[
+                            { id: "vision", label: "📸 Multimodal Vision AI", icon: Brain },
+                            { id: "soil", label: "🧪 Soil NPK Engine", icon: FlaskConical },
+                            { id: "eganna", label: "🌾 eGanna & Mandi APIs", icon: Building2 },
+                            { id: "voice", label: "🎙️ Vernacular Voice AI", icon: Mic }
+                        ].map((tTab) => (
+                            <button
+                                key={tTab.id}
+                                type="button"
+                                onClick={() => setTechTab(tTab.id)}
+                                className={`px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 whitespace-nowrap ${
+                                    techTab === tTab.id
+                                        ? "bg-emerald-600 text-white shadow-md"
+                                        : "bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200"
+                                }`}
                             >
-                                <value.icon className="w-10 h-10 text-white" />
-                            </motion.div>
-                            <h3 className="text-2xl font-bold text-gray-900 mb-4">{value.title}</h3>
-                            <p className="text-gray-600 leading-relaxed">{value.description}</p>
-                        </motion.div>
-                    ))}
-                </div>
-            </motion.div>
-
-            {/* Key Features Section */}
-            <motion.div
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true, margin: "-100px" }}
-                variants={staggerContainer}
-                className="bg-gradient-to-br from-gray-50 to-white py-20 px-4 sm:px-6 lg:px-8"
-            >
-                <div className="max-w-7xl mx-auto">
-                    <motion.h2
-                        variants={fadeInUp}
-                        className="text-4xl md:text-5xl font-black text-center mb-16 bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent"
-                    >
-                        What Makes Us Different
-                    </motion.h2>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        {keyFeatures.map((feature, index) => (
-                            <motion.div
-                                key={index}
-                                variants={fadeInUp}
-                                whileHover={{ scale: 1.02 }}
-                                className="bg-white rounded-3xl p-8 shadow-xl border border-gray-100 group hover:border-green-300 transition-all duration-300"
-                            >
-                                <div className="flex items-start space-x-6">
-                                    <motion.div
-                                        whileHover={{ rotate: 15, scale: 1.1 }}
-                                        className="flex-shrink-0 w-16 h-16 bg-gradient-to-br from-green-400 to-emerald-600 rounded-2xl flex items-center justify-center shadow-lg"
-                                    >
-                                        <feature.icon className="w-8 h-8 text-white" />
-                                    </motion.div>
-                                    <div className="flex-grow">
-                                        <h3 className="text-2xl font-bold text-gray-900 mb-3">{feature.title}</h3>
-                                        <p className="text-gray-600 mb-4 leading-relaxed">{feature.description}</p>
-                                        <div className="inline-block px-4 py-2 bg-green-50 rounded-full">
-                                            <p className="text-sm font-bold text-green-600">{feature.stats}</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </motion.div>
+                                <tTab.icon className="w-3.5 h-3.5" />
+                                <span>{tTab.label}</span>
+                            </button>
                         ))}
                     </div>
                 </div>
-            </motion.div>
 
-            {/* Team Section */}
-            <motion.div
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true, margin: "-100px" }}
-                variants={staggerContainer}
-                className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20"
-            >
-                <motion.h2
-                    variants={fadeInUp}
-                    className="text-4xl md:text-5xl font-black text-center mb-6 bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent"
-                >
-                    Meet Our Team
-                </motion.h2>
-                <motion.p
-                    variants={fadeInUp}
-                    className="text-xl text-gray-600 text-center mb-16 max-w-3xl mx-auto"
-                >
-                    A passionate group of experts dedicated to transforming agriculture through technology
-                </motion.p>
+                {/* Tech Tab Content */}
+                <div className="p-6 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700 text-xs sm:text-sm text-slate-700 dark:text-slate-300 space-y-3 leading-relaxed">
+                    {techTab === "vision" && (
+                        <div>
+                            <h4 className="text-base font-bold text-slate-900 dark:text-white mb-2 flex items-center gap-2">
+                                <span>Multimodal Google Gemini Vision + Offline Heuristic Classifier</span>
+                            </h4>
+                            <p>
+                                The <strong>Disease Doctor</strong> utilizes WebRTC high-resolution camera stream capture to analyze leaf foliar pathology. Images are processed using multimodal prompts that output structured JSON prescriptions with botanical pathogen taxonomy, organic neem/trichoderma biocontrol dosages, chemical active ingredient concentrations per liter, and harvest safety waiting periods (PHI). If internet is unavailable, an embedded offline engine covers 30+ major crop diseases seamlessly.
+                            </p>
+                        </div>
+                    )}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                    {teamMembers.map((member, index) => (
-                        <motion.div
-                            key={index}
-                            variants={fadeInUp}
-                            whileHover={{ y: -10, scale: 1.02 }}
-                            onClick={() => setSelectedMember(selectedMember === index ? null : index)}
-                            className="bg-white/80 backdrop-blur-xl rounded-3xl p-8 shadow-xl border border-white/50 text-center cursor-pointer group"
-                        >
-                            <motion.div
-                                whileHover={{ scale: 1.1, rotate: 5 }}
-                                className="text-7xl mb-4"
-                            >
-                                {member.image}
-                            </motion.div>
-                            <h3 className="text-xl font-bold text-gray-900 mb-2">{member.name}</h3>
-                            <p className="text-sm font-semibold text-green-600 mb-4">{member.role}</p>
+                    {techTab === "soil" && (
+                        <div>
+                            <h4 className="text-base font-bold text-slate-900 dark:text-white mb-2 flex items-center gap-2">
+                                <span>Precision Chemical Fertilizer Bag Conversion Engine</span>
+                            </h4>
+                            <p>
+                                Rather than giving abstract nutrient numbers (e.g. 120kg N), EcoFarm mathematically converts soil lab test ratings (Available N, P₂O₅, K₂O in kg/ha, pH, OC%) directly into physical commercial fertilizer bags (DAP 50kg, Urea 45kg, MOP 50kg, SSP) adjusted for crop target yield. It also generates split-dose timelines (Basal, 1st Top-Dress, 2nd Top-Dress) and soil pH amendments (Gypsum for alkaline, Lime for acidic).
+                            </p>
+                        </div>
+                    )}
 
-                            <AnimatePresence>
-                                {selectedMember === index && (
-                                    <motion.div
-                                        initial={{ opacity: 0, height: 0 }}
-                                        animate={{ opacity: 1, height: "auto" }}
-                                        exit={{ opacity: 0, height: 0 }}
-                                        className="overflow-hidden"
-                                    >
-                                        <p className="text-sm text-gray-600 mb-4 leading-relaxed">{member.bio}</p>
-                                        <div className="flex justify-center space-x-3">
-                                            <a href={member.linkedin} className="p-2 bg-blue-100 rounded-xl hover:bg-blue-200 transition">
-                                                <Linkedin className="w-5 h-5 text-blue-600" />
-                                            </a>
-                                            <a href={member.twitter} className="p-2 bg-sky-100 rounded-xl hover:bg-sky-200 transition">
-                                                <Twitter className="w-5 h-5 text-sky-600" />
-                                            </a>
-                                        </div>
-                                    </motion.div>
-                                )}
-                            </AnimatePresence>
+                    {techTab === "eganna" && (
+                        <div>
+                            <h4 className="text-base font-bold text-slate-900 dark:text-white mb-2 flex items-center gap-2">
+                                <span>Direct State Sugarcane & APMC Mandi Data Connectors</span>
+                            </h4>
+                            <p>
+                                Integrates cascading district, sugar mill, and village grower code directories connecting directly with state sugarcane portals (<code>caneup.in</code> / eGanna). It tracks 12-column Satta calendars, 72-hour supply slip validity countdowns, weighbridge electronic receipts, and direct bank transfer (DBT) credit statuses alongside live national AGMARKNET commodity spot price feeds.
+                            </p>
+                        </div>
+                    )}
 
-                            <motion.div
-                                initial={{ opacity: 0 }}
-                                whileHover={{ opacity: 1 }}
-                                className="mt-4 text-xs text-gray-400 flex items-center justify-center"
-                            >
-                                <ChevronDown className="w-4 h-4" />
-                                <span className="ml-1">Click for more</span>
-                            </motion.div>
-                        </motion.div>
-                    ))}
+                    {techTab === "voice" && (
+                        <div>
+                            <h4 className="text-base font-bold text-slate-900 dark:text-white mb-2 flex items-center gap-2">
+                                <span>Vernacular Web Speech Recognition & Multilingual TTS</span>
+                            </h4>
+                            <p>
+                                Built for high rural accessibility with zero literacy barriers. Uses the browser's native Web Speech API with regional Indian dialect acoustic models to understand voice questions in Hindi, Marathi, Punjabi, Telugu, and English, and reads aloud prescriptions, news, and weather advisories using synthesized voice output.
+                            </p>
+                        </div>
+                    )}
                 </div>
-            </motion.div>
+            </div>
 
-            {/* Contact Section */}
-            <motion.div
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true, margin: "-100px" }}
-                variants={fadeInUp}
-                className="bg-gradient-to-br from-green-500 via-emerald-600 to-teal-600 py-20 px-4 sm:px-6 lg:px-8"
-            >
-                <div className="max-w-7xl mx-auto text-center text-white">
-                    <motion.div
-                        animate={{
-                            scale: [1, 1.1, 1],
-                            rotate: [0, 5, -5, 0]
-                        }}
-                        transition={{ duration: 3, repeat: Infinity }}
-                        className="inline-flex items-center justify-center w-20 h-20 bg-white/20 rounded-3xl mb-8"
-                    >
-                        <Heart className="w-10 h-10" />
-                    </motion.div>
-
-                    <h2 className="text-4xl md:text-5xl font-black mb-6">Get in Touch</h2>
-                    <p className="text-xl mb-12 max-w-2xl mx-auto leading-relaxed">
-                        Have questions? Want to partner with us? We'd love to hear from you!
+            {/* Research & Institutional Alignment */}
+            <div className="max-w-7xl mx-auto mb-16 bg-white dark:bg-slate-800 rounded-3xl p-6 sm:p-8 shadow-xl border border-slate-200 dark:border-slate-700 space-y-6">
+                <div className="text-center max-w-2xl mx-auto">
+                    <h2 className="text-2xl font-black text-slate-900 dark:text-white">
+                        Institutional & Research Alignment
+                    </h2>
+                    <p className="text-xs text-slate-500 mt-1">
+                        Agronomic guidelines and market data aligned with national standards
                     </p>
+                </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-                        <motion.div
-                            whileHover={{ scale: 1.05, y: -5 }}
-                            className="bg-white/10 backdrop-blur-xl rounded-2xl p-6 border border-white/20"
-                        >
-                            <Mail className="w-8 h-8 mx-auto mb-4" />
-                            <p className="font-semibold mb-2">Email Us</p>
-                            <p className="text-sm">contact@ecofarm.ai</p>
-                        </motion.div>
-
-                        <motion.div
-                            whileHover={{ scale: 1.05, y: -5 }}
-                            className="bg-white/10 backdrop-blur-xl rounded-2xl p-6 border border-white/20"
-                        >
-                            <Phone className="w-8 h-8 mx-auto mb-4" />
-                            <p className="font-semibold mb-2">Call Us</p>
-                            <p className="text-sm">+91 1800-ECO-FARM</p>
-                        </motion.div>
-
-                        <motion.div
-                            whileHover={{ scale: 1.05, y: -5 }}
-                            className="bg-white/10 backdrop-blur-xl rounded-2xl p-6 border border-white/20"
-                        >
-                            <MapPin className="w-8 h-8 mx-auto mb-4" />
-                            <p className="font-semibold mb-2">Visit Us</p>
-                            <p className="text-sm">Bangalore, India</p>
-                        </motion.div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-xs">
+                    <div className="p-5 rounded-2xl bg-emerald-50/60 dark:bg-slate-700/40 border border-emerald-200 dark:border-slate-600 space-y-2">
+                        <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-950 text-emerald-600 flex items-center justify-center font-black">
+                            <Building2 className="w-5 h-5" />
+                        </div>
+                        <h4 className="font-black text-sm text-slate-900 dark:text-white">ICAR & KVK Framework</h4>
+                        <p className="text-slate-600 dark:text-slate-300 leading-relaxed">
+                            Formulated based on ICAR (Indian Council of Agricultural Research) package of practices and state agricultural university recommendations.
+                        </p>
                     </div>
 
-                    <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        className="mt-12 px-10 py-5 bg-white text-green-600 rounded-2xl font-bold shadow-2xl hover:shadow-3xl transform transition-all duration-300 text-lg"
-                    >
-                        Send us a Message
-                    </motion.button>
-                </div>
-            </motion.div>
+                    <div className="p-5 rounded-2xl bg-emerald-50/60 dark:bg-slate-700/40 border border-emerald-200 dark:border-slate-600 space-y-2">
+                        <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-950 text-blue-600 flex items-center justify-center font-black">
+                            <FileText className="w-5 h-5" />
+                        </div>
+                        <h4 className="font-black text-sm text-slate-900 dark:text-white">Soil Health Card Standard</h4>
+                        <p className="text-slate-600 dark:text-slate-300 leading-relaxed">
+                            Incorporates the official 12-parameter soil testing standards from the Ministry of Agriculture & Farmers Welfare.
+                        </p>
+                    </div>
 
-            {/* Final CTA */}
-            <motion.div
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true, margin: "-100px" }}
-                variants={fadeInUp}
-                className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center"
-            >
-                <Lightbulb className="w-16 h-16 mx-auto mb-6 text-yellow-500" />
-                <h2 className="text-3xl md:text-4xl font-black text-gray-900 mb-6">
-                    Ready to Transform Your Farming?
-                </h2>
-                <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-                    Join thousands of farmers who are already using EcoFarm to increase yields and profits
-                </p>
-                <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className="px-10 py-5 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-2xl font-bold shadow-2xl hover:shadow-3xl transform transition-all duration-300 text-lg"
-                >
-                    Start Your Journey Today
-                </motion.button>
-            </motion.div>
+                    <div className="p-5 rounded-2xl bg-emerald-50/60 dark:bg-slate-700/40 border border-emerald-200 dark:border-slate-600 space-y-2">
+                        <div className="w-10 h-10 rounded-xl bg-purple-100 dark:bg-purple-950 text-purple-600 flex items-center justify-center font-black">
+                            <TrendingUp className="w-5 h-5" />
+                        </div>
+                        <h4 className="font-black text-sm text-slate-900 dark:text-white">e-NAM & MSP Benchmarks</h4>
+                        <p className="text-slate-600 dark:text-slate-300 leading-relaxed">
+                            Real-time spot price mapping against Government Minimum Support Price (MSP) notified floor values across APMC yards.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            {/* Developer Team & Research Mentors */}
+            <div className="max-w-7xl mx-auto mb-16 space-y-6">
+                <div className="text-center max-w-2xl mx-auto">
+                    <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
+                        Development Team & Mentorship
+                    </h2>
+                    <p className="text-xs sm:text-sm text-slate-500 mt-1">
+                        Built with dedication to Indian agricultural innovation and open technology
+                    </p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {teamMembers.map((member, idx) => (
+                        <div
+                            key={idx}
+                            className="bg-white dark:bg-slate-800 rounded-3xl p-6 shadow-xl border border-slate-200 dark:border-slate-700 flex flex-col justify-between hover:shadow-2xl transition duration-300 text-center"
+                        >
+                            <div>
+                                <div className="w-24 h-24 rounded-3xl overflow-hidden mx-auto mb-4 border-2 border-emerald-500 shadow-md">
+                                    <img
+                                        src={member.avatar}
+                                        alt={member.name}
+                                        className="w-full h-full object-cover"
+                                    />
+                                </div>
+                                <h3 className="text-lg font-black text-slate-900 dark:text-white">
+                                    {member.name}
+                                </h3>
+                                <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">
+                                    {member.role}
+                                </p>
+                                <p className="text-xs text-slate-600 dark:text-slate-300 mt-3 leading-relaxed">
+                                    {member.bio}
+                                </p>
+                            </div>
+
+                            <div className="flex justify-center gap-3 pt-5 mt-4 border-t border-slate-100 dark:border-slate-700">
+                                <a
+                                    href={member.github}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="p-2 bg-slate-100 dark:bg-slate-700 hover:bg-emerald-100 dark:hover:bg-emerald-950 text-slate-700 dark:text-slate-300 rounded-xl transition"
+                                >
+                                    <Github className="w-4 h-4" />
+                                </a>
+                                <a
+                                    href={member.linkedin}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="p-2 bg-slate-100 dark:bg-slate-700 hover:bg-emerald-100 dark:hover:bg-emerald-950 text-slate-700 dark:text-slate-300 rounded-xl transition"
+                                >
+                                    <Linkedin className="w-4 h-4 text-blue-600" />
+                                </a>
+                                <a
+                                    href={`mailto:${member.email}`}
+                                    className="p-2 bg-slate-100 dark:bg-slate-700 hover:bg-emerald-100 dark:hover:bg-emerald-950 text-slate-700 dark:text-slate-300 rounded-xl transition"
+                                >
+                                    <Mail className="w-4 h-4 text-emerald-600" />
+                                </a>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            {/* Interactive Feedback & Partner Inquiries Form */}
+            <div className="max-w-4xl mx-auto bg-white dark:bg-slate-800 rounded-3xl p-6 sm:p-10 shadow-xl border border-slate-200 dark:border-slate-700 space-y-6">
+                <div className="text-center max-w-xl mx-auto">
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 rounded-full text-xs font-bold uppercase tracking-wider mb-2">
+                        <Mail className="w-3.5 h-3.5" />
+                        <span>Get In Touch</span>
+                    </div>
+                    <h2 className="text-2xl font-black text-slate-900 dark:text-white">
+                        Agronomy Inquiries & Feedback
+                    </h2>
+                    <p className="text-xs text-slate-500 mt-1">
+                        Have suggestions, want to report an agronomy dataset improvement, or collaborate with FPOs? Send us a message below.
+                    </p>
+                </div>
+
+                {submitSuccess ? (
+                    <div className="p-8 text-center bg-emerald-50 dark:bg-emerald-950/40 rounded-2xl border border-emerald-200 dark:border-emerald-800 space-y-2">
+                        <div className="w-12 h-12 bg-emerald-100 dark:bg-emerald-900 text-emerald-600 rounded-full flex items-center justify-center mx-auto">
+                            <Check className="w-6 h-6" />
+                        </div>
+                        <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                            Message Received Successfully!
+                        </h3>
+                        <p className="text-xs text-slate-600 dark:text-slate-300">
+                            Thank you for your feedback. The EcoFarm agritech engineering team will review your message.
+                        </p>
+                    </div>
+                ) : (
+                    <form onSubmit={handleContactSubmit} className="space-y-4 text-xs font-semibold">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-slate-700 dark:text-slate-300 mb-1">
+                                    Your Full Name (नाम) *
+                                </label>
+                                <input
+                                    type="text"
+                                    required
+                                    placeholder="e.g. Ramesh Kumar"
+                                    value={contactForm.name}
+                                    onChange={(e) => setContactForm({ ...contactForm, name: e.target.value })}
+                                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-slate-700 dark:text-slate-300 mb-1">
+                                    Mobile Number or Email (मोबाइल / ईमेल)
+                                </label>
+                                <input
+                                    type="text"
+                                    placeholder="e.g. +91 98765 43210"
+                                    value={contactForm.phone}
+                                    onChange={(e) => setContactForm({ ...contactForm, phone: e.target.value })}
+                                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500"
+                                />
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="block text-slate-700 dark:text-slate-300 mb-1">
+                                Inquiry Category (विषय)
+                            </label>
+                            <select
+                                value={contactForm.category}
+                                onChange={(e) => setContactForm({ ...contactForm, category: e.target.value })}
+                                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500 font-medium"
+                            >
+                                <option value="Farmer Support">Farmer Support & Disease Advice</option>
+                                <option value="FPO & Mandi Partnership">FPO & Cooperative Mandi Partnership</option>
+                                <option value="Agronomy Data Correction">Agronomy Data & Crop Variety Correction</option>
+                                <option value="Technical Bug Report">Technical Bug Report & Feedback</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label className="block text-slate-700 dark:text-slate-300 mb-1">
+                                Message Details (संदेश) *
+                            </label>
+                            <textarea
+                                required
+                                rows={4}
+                                placeholder="Describe your question, suggestions, or partnership request..."
+                                value={contactForm.message}
+                                onChange={(e) => setContactForm({ ...contactForm, message: e.target.value })}
+                                className="w-full p-3.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500 resize-none font-normal"
+                            />
+                        </div>
+
+                        <div className="flex justify-end pt-2">
+                            <button
+                                type="submit"
+                                disabled={isSubmitting}
+                                className="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-lg flex items-center gap-2 transition disabled:opacity-50"
+                            >
+                                <Send className="w-4 h-4" />
+                                <span>{isSubmitting ? "Sending..." : "Submit Message (संदेश भेजें)"}</span>
+                            </button>
+                        </div>
+                    </form>
+                )}
+            </div>
         </div>
     );
 }
-
