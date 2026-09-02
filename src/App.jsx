@@ -10,13 +10,13 @@ import Crops from "./components/Crops";
 import NewsSection from "./components/Market";
 import About from "./components/About";
 import Profile from "./components/Profile";
+import AuthModal from "./components/AuthModal";
 
 export default function App() {
     return (
-        
-
         <BrowserRouter>
             <Header />      {/* Buttons will be inside this */}
+            <AuthModal />
             <Routes>
                 {/* Home Page */}
                 <Route path="/" element={<Home />} />

@@ -821,15 +821,12 @@ export default function Profile() {
                         {/* Language Selection */}
                         <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-700/40 border border-slate-200 dark:border-slate-600 space-y-3">
                             <h4 className="text-xs font-bold uppercase text-slate-500">
-                                🌐 Native Dialect & Vernacular Language
+                                🌐 Preferred Language (भाषा चुनें)
                             </h4>
-                            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 text-xs font-bold">
+                            <div className="grid grid-cols-2 gap-2 text-xs font-bold">
                                 {[
                                     { code: "en", label: "English" },
-                                    { code: "hi", label: "हिन्दी (Hindi)" },
-                                    { code: "mr", label: "मराठी (Marathi)" },
-                                    { code: "pa", label: "ਪੰਜਾਬੀ (Punjabi)" },
-                                    { code: "te", label: "తెలుగు (Telugu)" }
+                                    { code: "hi", label: "हिन्दी (Hindi)" }
                                 ].map((lang) => (
                                     <button
                                         key={lang.code}

@@ -60,10 +60,7 @@ export default function Header() {
 
     const languages = [
         { code: "en", label: "English" },
-        { code: "hi", label: "हिन्दी (Hindi)" },
-        { code: "mr", label: "मराठी (Marathi)" },
-        { code: "pa", label: "ਪੰਜਾਬੀ (Punjabi)" },
-        { code: "te", label: "తెలుగు (Telugu)" }
+        { code: "hi", label: "हिन्दी (Hindi)" }
     ];
 
     return (
@@ -80,35 +77,13 @@ export default function Header() {
         >
             <div className="max-w-7xl mx-auto flex items-center justify-between h-16">
                 {/* ---------------- LOGO ---------------- */}
-                <Link to="/" className="flex items-center space-x-3 group">
-                    <div className="relative">
-                        <motion.div
-                            className="w-11 h-11 bg-gradient-to-br from-green-400 via-emerald-500 to-teal-500 rounded-2xl shadow-xl flex items-center justify-center group-hover:scale-105 transition"
-                            animate={{
-                                rotate: [0, 5, -5, 0],
-                                scale: [1, 1.02, 1]
-                            }}
-                            transition={{
-                                rotate: { duration: 4, repeat: Infinity },
-                                scale: { duration: 2, repeat: Infinity }
-                            }}
-                        >
-                            <Store className="w-6 h-6 text-white" />
-                        </motion.div>
-                        <motion.div
-                            className="absolute -top-1 -right-1 w-5 h-5 bg-green-400 rounded-full flex items-center justify-center shadow"
-                            initial={{ scale: 0 }}
-                            animate={{ scale: 1 }}
-                        >
-                            <span className="text-[10px] font-black text-white">AI</span>
-                        </motion.div>
-                    </div>
-
+                <Link to="/" className="flex items-center space-x-2 group">
                     <div>
-                        <h1 className="text-xl font-black bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-200 bg-clip-text text-transparent">
-                            {t.appName}
+                        <h1 className="text-2xl font-black bg-gradient-to-r from-emerald-800 to-green-600 dark:from-white dark:to-emerald-400 bg-clip-text text-transparent flex items-center gap-1.5">
+                            <span className="text-2xl">🌱</span>
+                            <span>{t.appName}</span>
                         </h1>
-                        <p className="text-[11px] text-emerald-600 font-bold uppercase tracking-wider">
+                        <p className="text-[10px] text-emerald-600 font-bold uppercase tracking-wider">
                             {t.tagline}
                         </p>
                     </div>
@@ -281,7 +256,7 @@ export default function Header() {
                                             className="w-full text-left px-4 py-2 hover:bg-slate-50 dark:hover:bg-gray-700 text-slate-700 dark:text-slate-200 font-medium flex items-center gap-2"
                                         >
                                             <User className="w-3.5 h-3.5 text-emerald-600" />
-                                            <span>Full Kisan Profile & Plots</span>
+                                            <span>{language === "hi" ? "किसान प्रोफ़ाइल व खेत" : "Full Kisan Profile & Plots"}</span>
                                         </Link>
 
                                         <button
@@ -293,7 +268,7 @@ export default function Header() {
                                             className="w-full text-left px-4 py-2 hover:bg-slate-50 dark:hover:bg-gray-700 text-slate-700 dark:text-slate-200 font-medium flex items-center gap-2"
                                         >
                                             <CreditCard className="w-3.5 h-3.5 text-blue-600" />
-                                            <span>Digital Kisan Card (ID)</span>
+                                            <span>{language === "hi" ? "डिजिटल किसान कार्ड" : "Digital Kisan Card (ID)"}</span>
                                         </button>
 
                                         <div className="border-t border-slate-100 dark:border-gray-700 my-1" />
@@ -307,7 +282,7 @@ export default function Header() {
                                             className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 font-bold flex items-center gap-2"
                                         >
                                             <LogOut className="w-3.5 h-3.5" />
-                                            <span>Logout (लॉग आउट)</span>
+                                            <span>{language === "hi" ? "लॉग आउट" : "Logout"}</span>
                                         </button>
                                     </motion.div>
                                 )}

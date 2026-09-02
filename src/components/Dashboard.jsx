@@ -16,7 +16,6 @@ import {
     Award,
     Search,
     Sparkles,
-    Rocket,
     X,
     AlertCircle,
     CheckCircle2,
@@ -29,7 +28,9 @@ import {
     ShoppingBag,
     Building2,
     Tractor,
-    FileText
+    FileText,
+    BookOpen,
+    Cpu
 } from "lucide-react";
 import CropRecommendation from "./CropRecommendation";
 import DiseaseDetection from "./DiseaseDetection";
@@ -47,6 +48,11 @@ import UserProfileModal from "./UserProfileModal";
 import DigitalKisanCard from "./DigitalKisanCard";
 import AuthModal from "./AuthModal";
 import VoiceAssistantModal from "./VoiceAssistantModal";
+import WeatherRadar from "./WeatherRadar";
+import FarmReportGenerator from "./FarmReportGenerator";
+import KhetKhata from "./KhetKhata";
+import SmartIrrigationIoT from "./SmartIrrigationIoT";
+import OrganicFarmingHub from "./OrganicFarmingHub";
 import { useFarmStore, translations } from "../utils/languageStore";
 
 export default function Dashboard() {
@@ -250,12 +256,52 @@ export default function Dashboard() {
             stats: "Live APMC Rates"
         },
         {
+            id: "organic-hub",
+            name: language === "hi" ? "जैविक व प्राकृतिक खेती" : "Organic & Natural Farming",
+            icon: Sprout,
+            color: "from-green-500 to-emerald-700",
+            description: language === "hi" ? "जीवामृत, बीजामृत व PKVY सब्सिडी" : "Jeevamrit, Brahmastra & PKVY subsidy",
+            stats: "Zero-Chemical Bio Hub"
+        },
+        {
+            id: "iot-drip",
+            name: language === "hi" ? "स्मार्ट IoT ड्रिप व सेंसर" : "Smart IoT Drip & Sensors",
+            icon: Cpu,
+            color: "from-cyan-400 to-emerald-600",
+            description: language === "hi" ? "मृदा नमी, NPK टेलीमेट्री व ऑटो मोटर" : "Live soil telemetry & automated pump",
+            stats: "IoT Telemetry"
+        },
+        {
             id: "irrigation",
             name: t.modules.irrigation,
             icon: Droplet,
             color: "from-teal-400 to-cyan-500",
             description: t.modules.irrigationDesc,
             stats: "30% Water Savings"
+        },
+        {
+            id: "weather-radar",
+            name: language === "hi" ? "मौसम व छिड़काव राडार" : "Weather & Spray Radar",
+            icon: CloudRain,
+            color: "from-sky-400 to-emerald-600",
+            description: language === "hi" ? "सटीक मौसम व स्प्रे समय" : "Hourly agri-weather & spray window",
+            stats: "Open-Meteo Live"
+        },
+        {
+            id: "farm-report",
+            name: language === "hi" ? "खेत स्वास्थ्य पत्रिका (PDF)" : "Farm Health Dossier",
+            icon: FileText,
+            color: "from-emerald-500 to-teal-700",
+            description: language === "hi" ? "दुकान व बीमा हेतु पर्चा" : "Printable prescription & PDF",
+            stats: "Official Khet Patrika"
+        },
+        {
+            id: "khet-khata",
+            name: language === "hi" ? "खेत खाता (रोकड़बही)" : "Khet Khata (P&L Ledger)",
+            icon: BookOpen,
+            color: "from-amber-400 to-emerald-600",
+            description: language === "hi" ? "डिजिटल आय-व्यय व शुद्ध मुनाफा" : "Digital cashbook & net margin",
+            stats: "Farm P&L Ledger"
         },
         {
             id: "cost",
@@ -315,28 +361,6 @@ export default function Dashboard() {
                 />
             </div>
 
-            {/* Top Right Action Buttons: Roadmap & Voice Trigger */}
-            <div className="absolute top-24 right-6 z-30 flex items-center gap-2">
-                <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => setIsVoiceModalOpen(true)}
-                    className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-full shadow-lg font-bold text-xs"
-                >
-                    <Mic className="w-4 h-4 animate-bounce" />
-                    <span>{t.voiceAssistant}</span>
-                </motion.button>
-
-                <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => setShowRoadmap(true)}
-                    className="flex items-center gap-2 px-4 py-2 bg-white/90 dark:bg-slate-800/90 backdrop-blur-md rounded-full shadow-lg border border-green-200 dark:border-slate-700 text-green-700 dark:text-emerald-400 font-bold text-xs hover:bg-green-50 transition"
-                >
-                    <Rocket className="w-4 h-4 text-green-600" />
-                    <span>System Roadmap</span>
-                </motion.button>
-            </div>
 
             {/* Header / Hero Section */}
             <motion.div
@@ -532,6 +556,11 @@ export default function Dashboard() {
 
                             {openModule === "crop" && <CropRecommendation />}
                             {openModule === "disease" && <DiseaseDetection />}
+                            {openModule === "organic-hub" && <OrganicFarmingHub />}
+                            {openModule === "weather-radar" && <WeatherRadar />}
+                            {openModule === "iot-drip" && <SmartIrrigationIoT />}
+                            {openModule === "farm-report" && <FarmReportGenerator />}
+                            {openModule === "khet-khata" && <KhetKhata />}
                             {openModule === "eganna" && <EGannaHub />}
                             {openModule === "soil" && <SoilHealthCalculator />}
                             {openModule === "calendar" && <CropCalendar />}
@@ -543,60 +572,6 @@ export default function Dashboard() {
                             {openModule === "irrigation" && <IrrigationPlanner />}
                             {openModule === "cost" && <CostCalculator />}
                         </div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
-
-            {/* Roadmap Modal */}
-            <AnimatePresence>
-                {showRoadmap && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-                        onClick={() => setShowRoadmap(false)}
-                    >
-                        <motion.div
-                            initial={{ scale: 0.9, opacity: 0, y: 20 }}
-                            animate={{ scale: 1, opacity: 1, y: 0 }}
-                            exit={{ scale: 0.9, opacity: 0, y: 20 }}
-                            onClick={(e) => e.stopPropagation()}
-                            className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-3xl max-h-[85vh] overflow-hidden flex flex-col relative border border-slate-200 dark:border-slate-800"
-                        >
-                            <div className="bg-gradient-to-r from-emerald-600 to-teal-700 p-6 text-white flex justify-between items-center shrink-0">
-                                <div className="flex items-center gap-3">
-                                    <div className="p-2 bg-white/20 rounded-xl">
-                                        <Rocket className="w-6 h-6 text-yellow-300" />
-                                    </div>
-                                    <div>
-                                        <h2 className="text-xl font-bold">EcoFarm Agritech Platform</h2>
-                                        <p className="text-emerald-100 text-xs">Production Feature Architecture</p>
-                                    </div>
-                                </div>
-                                <button
-                                    onClick={() => setShowRoadmap(false)}
-                                    className="p-2 hover:bg-white/20 rounded-full transition text-white"
-                                >
-                                    <X className="w-5 h-5" />
-                                </button>
-                            </div>
-
-                            <div className="overflow-y-auto p-6 space-y-4 text-xs sm:text-sm text-slate-700 dark:text-slate-300">
-                                <div className="p-4 rounded-2xl bg-lime-50 dark:bg-lime-950/40 border border-lime-200 dark:border-lime-800 text-lime-900 dark:text-lime-200">
-                                    <strong>🌾 E-Ganna & Sugar Mill Intermediary:</strong> Direct connector to state sugarcane commissioner portals (`caneup.in`) for 12-column Satta calendars, active supply slips, and weighment DBT payments.
-                                </div>
-                                <div className="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200">
-                                    <strong>🧪 Soil Health & NPK Calculator:</strong> Precision commercial fertilizer bag dosage (DAP, Urea, Potash) based on lab test reports with soil pH correction.
-                                </div>
-                                <div className="p-4 rounded-2xl bg-cyan-50 dark:bg-cyan-950/40 border border-cyan-200 dark:border-cyan-800 text-cyan-900 dark:text-cyan-200">
-                                    <strong>📅 Crop Calendar & Khet Khata:</strong> Crop growth milestones, split fertilizing reminders, and daily farm cashbook expense ledger.
-                                </div>
-                                <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-200">
-                                    <strong>🤝 Krishi Bazar & Custom Hiring:</strong> Direct farmer produce/seeds marketplace and hour-based tractor & spray drone machinery rental.
-                                </div>
-                            </div>
-                        </motion.div>
                     </motion.div>
                 )}
             </AnimatePresence>

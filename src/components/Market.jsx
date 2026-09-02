@@ -24,7 +24,10 @@ import {
     Printer,
     ExternalLink,
     Filter,
-    ShieldCheck
+    ShieldCheck,
+    RefreshCw,
+    Radio,
+    Globe
 } from "lucide-react";
 import {
     AGRI_NEWS_ARTICLES,
@@ -45,7 +48,88 @@ export default function Market() {
     const [newsCategory, setNewsCategory] = useState("ALL");
     const [newsSearch, setNewsSearch] = useState("");
     const [speakingArticleId, setSpeakingArticleId] = useState(null);
+    const [liveNews, setLiveNews] = useState([]);
+    const [isLoadingNews, setIsLoadingNews] = useState(true);
+    const [isLiveApiActive, setIsLiveApiActive] = useState(false);
+    const [lastUpdated, setLastUpdated] = useState(new Date().toLocaleTimeString());
     const speechSynthRef = useRef(null);
+
+    const fallbackAgriImages = [
+        "https://images.unsplash.com/photo-1592417817098-8f3d69106095?auto=format&fit=crop&w=600&q=80",
+        "https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?auto=format&fit=crop&w=600&q=80",
+        "https://images.unsplash.com/photo-1534274988757-a28bf1a57c17?auto=format&fit=crop&w=600&q=80",
+        "https://images.unsplash.com/photo-1509391365360-2e959784a276?auto=format&fit=crop&w=600&q=80",
+        "https://images.unsplash.com/photo-1508615039623-a25605d2b022?auto=format&fit=crop&w=600&q=80",
+        "https://images.unsplash.com/photo-1581093458791-9f3c3900df4b?auto=format&fit=crop&w=600&q=80"
+    ];
+
+    const cleanHtml = (html) => {
+        if (!html) return "";
+        const doc = new DOMParser().parseFromString(html, "text/html");
+        return doc.body.textContent || "";
+    };
+
+    const fetchLiveAgriNews = async (cat = newsCategory) => {
+        setIsLoadingNews(true);
+        try {
+            let query = "agriculture india farmer MSP crop";
+            if (cat === "Govt Policies & Subsidies") {
+                query = "PM Kisan scheme subsidy agriculture fertilizer india";
+            } else if (cat === "Weather & Agro-Meteorology") {
+                query = "monsoon rain weather agriculture crop IMD india";
+            } else if (cat === "Commodity & Mandi Trends") {
+                query = "mandi price wheat mustard paddy MSP procurement india";
+            } else if (cat === "Agritech & Innovation") {
+                query = "ICAR agritech drone organic precision farming india";
+            }
+
+            const encodedRssUrl = encodeURIComponent(`https://news.google.com/rss/search?q=${encodeURIComponent(query)}&hl=en-IN&gl=IN&ceid=IN:en`);
+            const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodedRssUrl}`;
+
+            const res = await fetch(apiUrl);
+            const data = await res.json();
+
+            if (data.status === "ok" && data.items && data.items.length > 0) {
+                const formatted = data.items.slice(0, 9).map((item, idx) => {
+                    const cleanDesc = cleanHtml(item.description || item.content);
+                    const sourceName = item.author || (item.title.includes(" - ") ? item.title.split(" - ").pop() : "Agri News Network");
+                    const cleanTitle = item.title.includes(" - ") ? item.title.split(" - ").slice(0, -1).join(" - ") : item.title;
+
+                    return {
+                        id: item.guid || `api-${idx}-${Date.now()}`,
+                        title: cleanTitle,
+                        category: cat === "ALL" ? "Live Agri Alert" : cat,
+                        date: item.pubDate ? new Date(item.pubDate).toLocaleDateString("en-IN", { month: "short", day: "numeric", year: "numeric" }) : "Today",
+                        source: sourceName,
+                        image: item.thumbnail || fallbackAgriImages[idx % fallbackAgriImages.length],
+                        readTime: "2 min read",
+                        summary: cleanDesc.length > 160 ? cleanDesc.slice(0, 160) + "..." : cleanDesc,
+                        link: item.link,
+                        isLiveApi: true,
+                        importantTakeaway: language === "hi"
+                            ? "नवीनतम बाजार परिस्थिति और वैज्ञानिक सलाह अनुसार समय पर कदम उठाएं।"
+                            : "Verified real-time intelligence for maximizing crop value and market timing."
+                    };
+                });
+                setLiveNews(formatted);
+                setIsLiveApiActive(true);
+                setLastUpdated(new Date().toLocaleTimeString());
+            } else {
+                setLiveNews(AGRI_NEWS_ARTICLES);
+                setIsLiveApiActive(false);
+            }
+        } catch (err) {
+            console.warn("Live news API error, fallback to curated feed:", err);
+            setLiveNews(AGRI_NEWS_ARTICLES);
+            setIsLiveApiActive(false);
+        } finally {
+            setIsLoadingNews(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchLiveAgriNews(newsCategory);
+    }, [newsCategory, language]);
 
     // Mandi state
     const [selectedMandiCrop, setSelectedMandiCrop] = useState(LIVE_MANDI_RATES[0]);
@@ -207,14 +291,17 @@ export default function Market() {
         "Agritech & Innovation"
     ];
 
-    const filteredNews = AGRI_NEWS_ARTICLES.filter((article) => {
+    const currentNewsPool = liveNews.length > 0 ? liveNews : AGRI_NEWS_ARTICLES;
+
+    const filteredNews = currentNewsPool.filter((article) => {
         const matchesCategory =
-            newsCategory === "ALL" || article.category === newsCategory;
+            newsCategory === "ALL" || article.category === newsCategory || article.category === "Live Agri Alert";
         const q = newsSearch.toLowerCase().trim();
         const matchesSearch =
             !q ||
             article.title.toLowerCase().includes(q) ||
-            article.summary.toLowerCase().includes(q);
+            (article.summary && article.summary.toLowerCase().includes(q)) ||
+            (article.source && article.source.toLowerCase().includes(q));
         return matchesCategory && matchesSearch;
     });
 
@@ -348,6 +435,43 @@ export default function Market() {
             {/* ================= TAB 1: AGRI-NEWSROOM ================= */}
             {activeTab === "news" && (
                 <div className="max-w-7xl mx-auto space-y-6">
+                    
+                    {/* Live API Feed Status Bar */}
+                    <div className="bg-gradient-to-r from-emerald-900 via-green-900 to-teal-950 text-white rounded-3xl p-4 sm:p-5 shadow-lg border border-emerald-500/30 flex flex-wrap items-center justify-between gap-4">
+                        <div className="flex items-center space-x-3">
+                            <div className="w-10 h-10 rounded-2xl bg-emerald-500/20 border border-emerald-400/30 flex items-center justify-center text-emerald-400">
+                                <Radio className="w-5 h-5 animate-pulse" />
+                            </div>
+                            <div>
+                                <div className="flex items-center space-x-2">
+                                    <span className="flex h-2 w-2 relative">
+                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                                    </span>
+                                    <h3 className="text-sm font-black text-white">
+                                        {language === "hi" ? "लाइव कृषि समाचार व APMC फीड (API Active)" : "Live Agricultural News Feed (API Stream)"}
+                                    </h3>
+                                </div>
+                                <p className="text-xs text-emerald-200/80 mt-0.5">
+                                    {language === "hi"
+                                        ? `राष्ट्रीय कृषि स्रोतों से सीधे ताज़ा समाचार • अंतिम अपडेट: ${lastUpdated}`
+                                        : `Real-time syndicated feed from verified Indian agri desks • Last updated: ${lastUpdated}`
+                                    }
+                                </p>
+                            </div>
+                        </div>
+
+                        <button
+                            type="button"
+                            onClick={() => fetchLiveAgriNews(newsCategory)}
+                            disabled={isLoadingNews}
+                            className="px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-xl text-xs font-bold text-white flex items-center space-x-2 transition cursor-pointer disabled:opacity-50"
+                        >
+                            <RefreshCw className={`w-3.5 h-3.5 ${isLoadingNews ? "animate-spin" : ""}`} />
+                            <span>{isLoadingNews ? (language === "hi" ? "लोड हो रहा है..." : "Fetching...") : (language === "hi" ? "ताज़ा करें (Refresh)" : "Refresh Live Feed")}</span>
+                        </button>
+                    </div>
+
                     {/* Category filter pills & Search */}
                     <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                         <div className="flex flex-wrap gap-2 text-xs">
@@ -356,13 +480,13 @@ export default function Market() {
                                     key={cat}
                                     type="button"
                                     onClick={() => setNewsCategory(cat)}
-                                    className={`px-3 py-1.5 rounded-xl font-bold transition ${
+                                    className={`px-3.5 py-2 rounded-xl font-bold transition cursor-pointer ${
                                         newsCategory === cat
-                                            ? "bg-emerald-600 text-white shadow-md"
+                                            ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/20"
                                             : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-100"
                                     }`}
                                 >
-                                    {cat === "ALL" ? "All News" : cat}
+                                    {cat === "ALL" ? (language === "hi" ? "सभी समाचार (All)" : "All News") : cat}
                                 </button>
                             ))}
                         </div>
@@ -371,7 +495,7 @@ export default function Market() {
                             <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
                             <input
                                 type="text"
-                                placeholder="Search news & policies..."
+                                placeholder={language === "hi" ? "समाचार या योजना खोजें..." : "Search news & policies..."}
                                 value={newsSearch}
                                 onChange={(e) => setNewsSearch(e.target.value)}
                                 className="w-full pl-10 pr-3 py-2 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500"
@@ -379,87 +503,129 @@ export default function Market() {
                         </div>
                     </div>
 
-                    {/* News Cards Grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {filteredNews.map((article) => (
-                            <div
-                                key={article.id}
-                                className="bg-white dark:bg-slate-800 rounded-3xl overflow-hidden shadow-lg border border-slate-200 dark:border-slate-700 flex flex-col justify-between hover:shadow-2xl transition duration-300"
-                            >
-                                <div>
-                                    {/* Image */}
-                                    <div className="relative h-48 overflow-hidden">
-                                        <img
-                                            src={article.image}
-                                            alt={article.title}
-                                            className="w-full h-full object-cover hover:scale-105 transition duration-500"
-                                        />
-                                        <div className="absolute top-3 left-3 px-2.5 py-0.5 bg-black/60 backdrop-blur-md rounded-full text-[10px] font-bold text-white">
-                                            {article.category}
+                    {/* Loading State or Cards Grid */}
+                    {isLoadingNews ? (
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            {[1, 2, 3, 4, 5, 6].map((sk) => (
+                                <div key={sk} className="bg-white dark:bg-slate-800 rounded-3xl p-5 border border-slate-200 dark:border-slate-700 animate-pulse space-y-4">
+                                    <div className="h-44 bg-slate-200 dark:bg-slate-700 rounded-2xl" />
+                                    <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-3/4" />
+                                    <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded w-full" />
+                                    <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded w-5/6" />
+                                </div>
+                            ))}
+                        </div>
+                    ) : filteredNews.length === 0 ? (
+                        <div className="text-center py-16 bg-white dark:bg-slate-800 rounded-3xl border border-dashed border-slate-300 dark:border-slate-700">
+                            <Newspaper className="w-12 h-12 text-slate-400 mx-auto mb-3" />
+                            <p className="text-sm font-bold text-slate-600 dark:text-slate-300">
+                                {language === "hi" ? "कोई समाचार नहीं मिला। कृपया दूसरा कीवर्ड खोजें।" : "No news matching your filter. Try refreshing or searching another keyword."}
+                            </p>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {filteredNews.map((article) => (
+                                <div
+                                    key={article.id}
+                                    className="bg-white dark:bg-slate-800 rounded-3xl overflow-hidden shadow-lg border border-slate-200 dark:border-slate-700 flex flex-col justify-between hover:shadow-2xl transition duration-300"
+                                >
+                                    <div>
+                                        {/* Image */}
+                                        <div className="relative h-48 overflow-hidden">
+                                            <img
+                                                src={article.image}
+                                                alt={article.title}
+                                                className="w-full h-full object-cover hover:scale-105 transition duration-500"
+                                            />
+                                            <div className="absolute top-3 left-3 px-2.5 py-0.5 bg-black/60 backdrop-blur-md rounded-full text-[10px] font-bold text-white flex items-center space-x-1">
+                                                <Globe className="w-3 h-3 text-emerald-400" />
+                                                <span>{article.category}</span>
+                                            </div>
+                                            {article.isLiveApi && (
+                                                <div className="absolute top-3 right-3 px-2 py-0.5 bg-emerald-600/90 text-[9px] font-black text-white rounded-md shadow">
+                                                    LIVE API
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Article Body */}
+                                        <div className="p-5 space-y-3">
+                                            <div className="flex items-center justify-between text-[11px] text-slate-400">
+                                                <span className="font-bold text-emerald-700 dark:text-emerald-400 truncate max-w-[150px]">
+                                                    {article.source}
+                                                </span>
+                                                <span>{article.date}</span>
+                                            </div>
+
+                                            <h3 className="text-base font-black text-slate-900 dark:text-white leading-snug line-clamp-2">
+                                                {article.title}
+                                            </h3>
+
+                                            <p className="text-xs text-slate-600 dark:text-slate-300 line-clamp-3 leading-relaxed">
+                                                {article.summary}
+                                            </p>
+
+                                            {/* Key Takeaway Box */}
+                                            <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 rounded-xl border border-emerald-200 dark:border-emerald-800/50 text-xs">
+                                                <span className="font-bold text-emerald-800 dark:text-emerald-300 block mb-0.5">
+                                                    💡 {language === "hi" ? "किसान के लिए मुख्य सलाह:" : "Key Farmer Takeaway:"}
+                                                </span>
+                                                <span className="text-slate-700 dark:text-slate-300 font-medium text-[11px] leading-relaxed">
+                                                    {article.importantTakeaway}
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
 
-                                    {/* Article Body */}
-                                    <div className="p-5 space-y-3">
-                                        <div className="flex items-center justify-between text-[11px] text-slate-400">
-                                            <span>{article.date}</span>
-                                            <span>{article.readTime}</span>
-                                        </div>
+                                    {/* Card Footer Actions */}
+                                    <div className="p-5 pt-0 flex items-center justify-between border-t border-slate-100 dark:border-slate-700/60 mt-2 gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => handleToggleSpeak(article)}
+                                            className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition cursor-pointer ${
+                                                speakingArticleId === article.id
+                                                    ? "bg-rose-500 text-white animate-pulse"
+                                                    : "bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-emerald-100"
+                                            }`}
+                                        >
+                                            {speakingArticleId === article.id ? (
+                                                <>
+                                                    <VolumeX className="w-3.5 h-3.5" /> {language === "hi" ? "रोकें" : "Stop"}
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Volume2 className="w-3.5 h-3.5 text-emerald-600" /> {language === "hi" ? "ऑडियो सुनें" : "Listen"}
+                                                </>
+                                            )}
+                                        </button>
 
-                                        <h3 className="text-base font-black text-slate-900 dark:text-white leading-snug">
-                                            {article.title}
-                                        </h3>
+                                        <div className="flex items-center space-x-1">
+                                            {article.link && (
+                                                <a
+                                                    href={article.link}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="p-2 text-slate-500 hover:text-emerald-600 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl transition cursor-pointer"
+                                                    title={language === "hi" ? "पूरा लेख स्रोत पर पढ़ें" : "Read full article on source"}
+                                                >
+                                                    <ExternalLink className="w-4 h-4" />
+                                                </a>
+                                            )}
 
-                                        <p className="text-xs text-slate-600 dark:text-slate-300 line-clamp-3 leading-relaxed">
-                                            {article.summary}
-                                        </p>
-
-                                        {/* Key Takeaway Box */}
-                                        <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 rounded-xl border border-emerald-200 dark:border-emerald-800/50 text-xs">
-                                            <span className="font-bold text-emerald-800 dark:text-emerald-300 block mb-0.5">
-                                                💡 Key Farmer Takeaway:
-                                            </span>
-                                            <span className="text-slate-700 dark:text-slate-300 font-medium">
-                                                {article.importantTakeaway}
-                                            </span>
+                                            <button
+                                                type="button"
+                                                onClick={() => handleShareWhatsApp(article)}
+                                                className="p-2 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950 rounded-xl transition cursor-pointer"
+                                                title="Share on WhatsApp"
+                                            >
+                                                <Share2 className="w-4 h-4" />
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
-
-                                {/* Card Footer Actions */}
-                                <div className="p-5 pt-0 flex items-center justify-between border-t border-slate-100 dark:border-slate-700/60 mt-2">
-                                    <button
-                                        type="button"
-                                        onClick={() => handleToggleSpeak(article)}
-                                        className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition ${
-                                            speakingArticleId === article.id
-                                                ? "bg-rose-500 text-white animate-pulse"
-                                                : "bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-emerald-100"
-                                        }`}
-                                    >
-                                        {speakingArticleId === article.id ? (
-                                            <>
-                                                <VolumeX className="w-3.5 h-3.5" /> Stop Audio
-                                            </>
-                                        ) : (
-                                            <>
-                                                <Volume2 className="w-3.5 h-3.5 text-emerald-600" /> Listen Audio
-                                            </>
-                                        )}
-                                    </button>
-
-                                    <button
-                                        type="button"
-                                        onClick={() => handleShareWhatsApp(article)}
-                                        className="p-2 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950 rounded-xl transition"
-                                        title="Share on WhatsApp"
-                                    >
-                                        <Share2 className="w-4 h-4" />
-                                    </button>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
             )}
 

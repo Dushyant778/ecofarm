@@ -391,12 +391,33 @@ export const useFarmStore = create((set, get) => {
         user: savedUser,
         farmerProfile: savedUser, // backward compatibility
 
-        login: (phone, name = "Kisan Farmer") => {
+        login: (authData, optionalName) => {
+            let phone = "";
+            let name = "Kisan Farmer";
+            let email = "";
+            let avatar = "";
+            let authProvider = "phone";
+
+            if (typeof authData === "string") {
+                phone = authData;
+                name = optionalName || "Kisan Farmer";
+            } else if (authData && typeof authData === "object") {
+                phone = authData.phone || "";
+                name = authData.name || authData.farmerName || optionalName || "Kisan Farmer";
+                email = authData.email || "";
+                avatar = authData.avatar || "";
+                authProvider = authData.authProvider || (email ? "google" : "phone");
+            }
+
+            const current = get().user || savedUser;
             const updated = {
-                ...savedUser,
-                phone: phone,
-                farmerName: name || savedUser.farmerName,
-                kisanId: `EF-${(savedUser.state || "IN").substring(0, 2).toUpperCase()}-${Math.floor(
+                ...current,
+                phone: phone || current.phone,
+                farmerName: name || current.farmerName,
+                email: email || current.email,
+                avatar: avatar || current.avatar,
+                authProvider: authProvider,
+                kisanId: current.kisanId || `EF-${(current.state || "IN").substring(0, 2).toUpperCase()}-${Math.floor(
                     10000 + Math.random() * 90000
                 )}`
             };

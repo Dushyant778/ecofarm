@@ -140,6 +140,30 @@ export default function VoiceAssistantModal({ onNavigateModule }) {
             setIsVoiceModalOpen(false);
             setIsProcessing(false);
             return;
+        } else if (lower.includes("khata") || lower.includes("खाता") || lower.includes("hisab") || lower.includes("हिसाब") || lower.includes("ledger") || lower.includes("bahi")) {
+            if (onNavigateModule) onNavigateModule("khet-khata");
+            speakText(language === "hi" ? "खेत खाता रोकड़बही खोली जा रही है।" : "Opening Khet Khata farm ledger.");
+            setIsVoiceModalOpen(false);
+            setIsProcessing(false);
+            return;
+        } else if (lower.includes("weather") || lower.includes("मौसम") || lower.includes("barish") || lower.includes("spray") || lower.includes("छिड़काव")) {
+            if (onNavigateModule) onNavigateModule("weather-radar");
+            speakText(language === "hi" ? "मौसम व कीटनाशक छिड़काव राडार खोला जा रहा है।" : "Opening Weather and Spray Radar.");
+            setIsVoiceModalOpen(false);
+            setIsProcessing(false);
+            return;
+        } else if (lower.includes("iot") || lower.includes("sensor") || lower.includes("सेंसर") || lower.includes("drip") || lower.includes("ड्रिप") || lower.includes("motor") || lower.includes("मोटर")) {
+            if (onNavigateModule) onNavigateModule("iot-drip");
+            speakText(language === "hi" ? "स्मार्ट IoT ड्रिप व सेंसर हब खोला जा रहा है।" : "Opening Smart IoT Drip and Soil Sensors.");
+            setIsVoiceModalOpen(false);
+            setIsProcessing(false);
+            return;
+        } else if (lower.includes("organic") || lower.includes("जैविक") || lower.includes("प्राकृतिक") || lower.includes("jeevamrit") || lower.includes("जीवामृत") || lower.includes("brahmastra")) {
+            if (onNavigateModule) onNavigateModule("organic-hub");
+            speakText(language === "hi" ? "जैविक व प्राकृतिक कृषि ज्ञानकोश खोला जा रहा है।" : "Opening Organic Farming and Bio-Inputs Hub.");
+            setIsVoiceModalOpen(false);
+            setIsProcessing(false);
+            return;
         } else if (lower.includes("cost") || lower.includes("लागत") || lower.includes("calculator") || lower.includes("munafa")) {
             if (onNavigateModule) onNavigateModule("cost");
             speakText("Opening Farm Cost & ROI Calculator.");
@@ -236,9 +260,6 @@ export default function VoiceAssistantModal({ onNavigateModule }) {
                             >
                                 <option value="hi-IN">हिन्दी (Hindi)</option>
                                 <option value="en-IN">English (India)</option>
-                                <option value="mr-IN">मराठी (Marathi)</option>
-                                <option value="pa-IN">ਪੰਜਾਬੀ (Punjabi)</option>
-                                <option value="te-IN">తెలుగు (Telugu)</option>
                             </select>
                         </div>
 

@@ -36,7 +36,6 @@ export default function About() {
     const t = translations[language] || translations.en;
 
     const [techTab, setTechTab] = useState("vision"); // 'vision' | 'soil' | 'eganna' | 'voice'
-    const [selectedTeamIndex, setSelectedTeamIndex] = useState(null);
 
     // Contact Form State
     const [contactForm, setContactForm] = useState({
@@ -63,38 +62,8 @@ export default function About() {
     const impactMetrics = [
         { value: "12+", label: "Smart Agritech Modules", icon: Zap, sub: "Disease, Soil, Mandi, E-Ganna & more" },
         { value: "25+", label: "Indian Crops Covered", icon: Leaf, sub: "Kharif, Rabi & Zaid Dossiers" },
-        { value: "5", label: "Vernacular Languages", icon: Globe, sub: "EN, हिन्दी, मराठी, ਪੰਜਾਬੀ, తెలుగు" },
+        { value: "2", label: "Supported Languages", icon: Globe, sub: "English & हिन्दी" },
         { value: "100%", label: "Offline-Resilient", icon: Shield, sub: "Embedded heuristic fallback database" }
-    ];
-
-    const teamMembers = [
-        {
-            name: "Rohit Negi",
-            role: "Instructor",
-            avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80",
-            bio: "Guiding software architecture, project roadmap, and scalable systems.",
-            github: "https://github.com",
-            linkedin: "https://linkedin.com",
-            email: "rohit@ecofarm.ai"
-        },
-        {
-            name: "Dushyant",
-            role: "Developer",
-            avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80",
-            bio: "Architecting high-performance offline PWA state engines, Soil Health NPK bag calculation models, and responsive vernacular UX systems.",
-            github: "https://github.com/Dushyant778",
-            linkedin: "https://linkedin.com",
-            email: "dushyant@ecofarm.ai"
-        },
-        {
-            name: "Aaditya Tandon",
-            role: "Database Instructor",
-            avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80",
-            bio: "Database architecture and backend mentorship, agricultural data schema optimization.",
-            github: "https://github.com",
-            linkedin: "https://linkedin.com",
-            email: "aaditya@ecofarm.ai"
-        }
     ];
 
     return (
@@ -321,70 +290,6 @@ export default function About() {
                 </div>
             </div>
 
-            {/* Developer Team & Research Mentors */}
-            <div className="max-w-7xl mx-auto mb-16 space-y-6">
-                <div className="text-center max-w-2xl mx-auto">
-                    <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
-                        Development Team & Mentorship
-                    </h2>
-                    <p className="text-xs sm:text-sm text-slate-500 mt-1">
-                        Built with dedication to Indian agricultural innovation and open technology
-                    </p>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {teamMembers.map((member, idx) => (
-                        <div
-                            key={idx}
-                            className="bg-white dark:bg-slate-800 rounded-3xl p-6 shadow-xl border border-slate-200 dark:border-slate-700 flex flex-col justify-between hover:shadow-2xl transition duration-300 text-center"
-                        >
-                            <div>
-                                <div className="w-24 h-24 rounded-3xl overflow-hidden mx-auto mb-4 border-2 border-emerald-500 shadow-md">
-                                    <img
-                                        src={member.avatar}
-                                        alt={member.name}
-                                        className="w-full h-full object-cover"
-                                    />
-                                </div>
-                                <h3 className="text-lg font-black text-slate-900 dark:text-white">
-                                    {member.name}
-                                </h3>
-                                <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">
-                                    {member.role}
-                                </p>
-                                <p className="text-xs text-slate-600 dark:text-slate-300 mt-3 leading-relaxed">
-                                    {member.bio}
-                                </p>
-                            </div>
-
-                            <div className="flex justify-center gap-3 pt-5 mt-4 border-t border-slate-100 dark:border-slate-700">
-                                <a
-                                    href={member.github}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="p-2 bg-slate-100 dark:bg-slate-700 hover:bg-emerald-100 dark:hover:bg-emerald-950 text-slate-700 dark:text-slate-300 rounded-xl transition"
-                                >
-                                    <Github className="w-4 h-4" />
-                                </a>
-                                <a
-                                    href={member.linkedin}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="p-2 bg-slate-100 dark:bg-slate-700 hover:bg-emerald-100 dark:hover:bg-emerald-950 text-slate-700 dark:text-slate-300 rounded-xl transition"
-                                >
-                                    <Linkedin className="w-4 h-4 text-blue-600" />
-                                </a>
-                                <a
-                                    href={`mailto:${member.email}`}
-                                    className="p-2 bg-slate-100 dark:bg-slate-700 hover:bg-emerald-100 dark:hover:bg-emerald-950 text-slate-700 dark:text-slate-300 rounded-xl transition"
-                                >
-                                    <Mail className="w-4 h-4 text-emerald-600" />
-                                </a>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </div>
 
             {/* Interactive Feedback & Partner Inquiries Form */}
             <div className="max-w-4xl mx-auto bg-white dark:bg-slate-800 rounded-3xl p-6 sm:p-10 shadow-xl border border-slate-200 dark:border-slate-700 space-y-6">

@@ -17,7 +17,7 @@ import {
 import { useFarmStore } from "../utils/languageStore";
 
 export default function DigitalKisanCard() {
-    const { user, isKisanCardModalOpen, setIsKisanCardModalOpen } = useFarmStore();
+    const { user, isKisanCardModalOpen, setIsKisanCardModalOpen, language } = useFarmStore();
 
     if (!isKisanCardModalOpen) return null;
 
@@ -48,7 +48,7 @@ export default function DigitalKisanCard() {
                                 <ShieldCheck className="w-5 h-5" />
                             </span>
                             <h3 className="text-base font-black text-slate-900 dark:text-white">
-                                Digital Kisan Identity Card
+                                {language === "hi" ? "डिजिटल किसान पहचान पत्र (ID Card)" : "Digital Kisan Identity Card"}
                             </h3>
                         </div>
                         <button
@@ -77,17 +77,17 @@ export default function DigitalKisanCard() {
                                 </div>
                                 <div>
                                     <span className="text-xs font-black tracking-widest text-emerald-400 uppercase block">
-                                        EcoFarm • डिजिटल किसान पहचान
+                                        EcoFarm • {language === "hi" ? "डिजिटल किसान पहचान" : "Digital Kisan ID"}
                                     </span>
                                     <span className="text-[10px] text-slate-300">
-                                        Verified Agritech Farmer ID
+                                        {language === "hi" ? "सत्यापित कृषि किसान पहचान" : "Verified Agritech Farmer ID"}
                                     </span>
                                 </div>
                             </div>
 
                             <div className="flex items-center gap-1 bg-emerald-500/20 px-2.5 py-1 rounded-full border border-emerald-400/30 text-[10px] font-bold text-emerald-300">
                                 <CheckCircle2 className="w-3 h-3 text-emerald-400" />
-                                <span>VERIFIED</span>
+                                <span>{language === "hi" ? "सत्यापित" : "VERIFIED"}</span>
                             </div>
                         </div>
 
@@ -108,14 +108,14 @@ export default function DigitalKisanCard() {
 
                                 <div className="space-y-0.5 min-w-0">
                                     <h4 className="text-sm font-black text-white truncate">
-                                        {user?.farmerName || "Chaudhary Ramesh Kumar"}
+                                        {user?.farmerName || (language === "hi" ? "चौधरी रमेश कुमार" : "Chaudhary Ramesh Kumar")}
                                     </h4>
                                     <p className="text-[11px] text-slate-300 truncate">
-                                        S/O: {user?.fatherName || "Shri Mahendra Singh"}
+                                        {language === "hi" ? "पिता:" : "S/O:"} {user?.fatherName || (language === "hi" ? "श्री महेंद्र सिंह" : "Shri Mahendra Singh")}
                                     </p>
                                     <p className="text-[11px] font-semibold text-emerald-300 flex items-center gap-1">
                                         <MapPin className="w-3 h-3 text-emerald-400 shrink-0" />
-                                        <span>{user?.village ? `${user.village}, ` : ""}{user?.district}, {user?.state}</span>
+                                        <span>{user?.village ? `${user.village}, ` : ""}{user?.district || "Meerut"}, {user?.state || "Uttar Pradesh"}</span>
                                     </p>
                                 </div>
                             </div>
@@ -126,7 +126,7 @@ export default function DigitalKisanCard() {
                                     <QrCode className="w-full h-full text-white" />
                                 </div>
                                 <span className="text-[9px] font-black text-slate-700 mt-1 uppercase tracking-tighter">
-                                    SCAN FOR APMC
+                                    {language === "hi" ? "मंडी स्कैन कोड" : "SCAN FOR APMC"}
                                 </span>
                             </div>
                         </div>
@@ -134,21 +134,21 @@ export default function DigitalKisanCard() {
                         {/* Card Footer Details */}
                         <div className="pt-3 border-t border-white/15 grid grid-cols-3 gap-2 text-[10px]">
                             <div>
-                                <span className="text-slate-400 block">Kisan ID No:</span>
+                                <span className="text-slate-400 block">{language === "hi" ? "किसान ID नंबर:" : "Kisan ID No:"}</span>
                                 <span className="font-mono font-bold text-amber-300 text-xs">
                                     {user?.kisanId || "EF-UP-MRT-84920"}
                                 </span>
                             </div>
                             <div>
-                                <span className="text-slate-400 block">Total Land:</span>
+                                <span className="text-slate-400 block">{language === "hi" ? "कुल कृषि भूमि:" : "Total Land:"}</span>
                                 <span className="font-bold text-white text-xs">
-                                    {user?.landSize || 3.5} {user?.landUnit || "Acres"}
+                                    {user?.landSize || 3.5} {user?.landUnit || (language === "hi" ? "एकड़" : "Acres")}
                                 </span>
                             </div>
                             <div>
-                                <span className="text-slate-400 block">Soil Health Card:</span>
+                                <span className="text-slate-400 block">{language === "hi" ? "मृदा स्वास्थ्य कार्ड:" : "Soil Health Card:"}</span>
                                 <span className="font-bold text-emerald-400 text-xs truncate block">
-                                    {user?.soilHealthCardNo || "SHC-UP-2024"}
+                                    {user?.soilHealthCardNo || "SHC-UP-2026"}
                                 </span>
                             </div>
                         </div>
@@ -161,14 +161,14 @@ export default function DigitalKisanCard() {
                             onClick={handlePrint}
                             className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow flex items-center justify-center gap-1.5 transition"
                         >
-                            <Printer className="w-4 h-4" /> Print / Save Card
+                            <Printer className="w-4 h-4" /> {language === "hi" ? "कार्ड प्रिंट / सेव करें" : "Print / Save Card"}
                         </button>
                         <button
                             type="button"
                             onClick={() => setIsKisanCardModalOpen(false)}
                             className="px-4 py-2.5 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800"
                         >
-                            Close
+                            {language === "hi" ? "बंद करें" : "Close"}
                         </button>
                     </div>
                 </motion.div>
